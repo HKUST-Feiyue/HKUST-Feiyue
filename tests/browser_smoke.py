@@ -42,6 +42,20 @@ def main():
     try:
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch()
+            context = browser.new_context()
+            page = context.new_page()
+            for route in ("/", "/submit.html", "/community.html", *("/" + item["url"] for item in articles)):
+                page.goto(base + route, wait_until="domcontentloaded")
+                canonical = page.locator('link[rel="canonical"]')
+                assert canonical.count() == 1
+                # Public metadata retains the production origin in previews.
+                if route == "/":
+                    origin = canonical.get_attribute("href").rstrip("/")
+                assert canonical.get_attribute("href") == origin + route
+                assert page.locator('meta[property="og:url"]').get_attribute("content") == origin + route
+                assert page.locator('meta[name="twitter:title"]').get_attribute("content") == page.title()
+                assert page.locator('meta[property="og:type"]').get_attribute("content") == ("article" if route.startswith("/articles/") else "website")
+            context.close()
             for width in (320, 390, 900, 901, 1440, 1600):
                 for theme in ("light", "dark"):
                     context = browser.new_context(viewport={"width": width, "height": 900}, reduced_motion="reduce")
@@ -230,7 +244,7 @@ def main():
                         page.locator("#category-nav [data-category='kaoyan']").click()
                         page.wait_for_url("**/?category=kaoyan")
                         page.wait_for_function("scrollY === 0")
-                        assert page.locator(".article-item:visible").count() == 1
+                        assert page.locator(".article-item:visible").count() == sum(item["category"] == "kaoyan" for item in articles)
                         if width <= 900:
                             page.locator("#menu-toggle").click()
                         page.locator("#category-nav [data-category='all']").click()
@@ -426,14 +440,14 @@ def main():
             page.goto(base + "/?view=all", wait_until="networkidle")
             page.evaluate("window.__sameDocument = true")
             page.locator('#category-nav [data-category="career"]').click()
-            page.wait_for_function("location.search === '?category=career' && !document.querySelector('#archive-section').hidden")
+            page.wait_for_function("document.querySelector('#category-nav [aria-current=page]')?.dataset.category === 'career'")
             assert page.evaluate("window.__sameDocument")
             page.keyboard.press("Control+k")
-            assert page.locator('#search-dialog').evaluate("el => el.open")
+            page.locator('#search-dialog').wait_for(state="visible")
             page.locator('#search').fill('no-matching-story-987654321')
             page.wait_for_function("document.querySelector('#search-results').textContent.includes('没有找到匹配内容')")
             page.keyboard.press("Escape")
-            assert not page.locator('#search-dialog').evaluate("el => el.open")
+            page.locator('#search-dialog').wait_for(state="hidden")
             page.wait_for_function("document.querySelector('#search').value === ''")
             page.locator('#category-nav [data-category="all"]').click()
             page.wait_for_function("location.search === '?view=all'")
@@ -534,18 +548,21 @@ def main():
             page.goto(base + "/?view=all", wait_until="networkidle")
             page.locator(".search-open").click()
             page.locator("#search").fill("理工")
-            page.wait_for_function("document.querySelectorAll('#search-results li a').length === 2")
+            page.wait_for_function("count => document.querySelectorAll('#search-results li a').length === count",
+                                   arg=sum("理工" in item["title"] for item in articles))
             page.locator("#search").fill("林同学")
             page.wait_for_function("document.querySelectorAll('#search-results li a').length === 1")
             assert page.locator("#search-results .search-title mark").count() == 1
             page.locator("#search").fill("2026")
-            page.wait_for_function("document.querySelectorAll('#search-results li a').length === 4")
-            assert page.locator("#search-results .search-match mark").count() == 4
+            year_matches = sum(item["year"] == "2026" for item in articles)
+            page.wait_for_function("count => document.querySelectorAll('#search-results li a').length === count", arg=year_matches)
+            assert page.locator("#search-results .search-match mark").count() == year_matches
             assert page.locator("#search-results .search-match").first.inner_text().startswith("2026 届")
             page.locator("#search").fill("某学院")
             page.wait_for_function("document.querySelector('#search-results .search-match mark')?.textContent === '某学院'")
-            assert page.locator("#search-results li a").count() == 4
-            assert page.locator("#search-results .search-match mark").count() == 4
+            college_matches = sum(item["college"] == "某学院" for item in articles)
+            assert page.locator("#search-results li a").count() == college_matches
+            assert page.locator("#search-results .search-match mark").count() == college_matches
             page.locator("#search").fill("推荐信")
             page.locator("#search-results li a").first.wait_for(state="visible")
             assert page.locator("#search-results li a").count() == 1
