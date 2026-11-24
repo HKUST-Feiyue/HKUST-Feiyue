@@ -54,7 +54,7 @@
       "type": "text",
       "required": true,
       "maxLength": 100,
-      "placeholder": "例如 应急管理学院"
+      "placeholder": "例如 工学院"
     },
     {
       "name": "major",
@@ -63,7 +63,7 @@
       "type": "text",
       "required": true,
       "maxLength": 100,
-      "placeholder": "例如 安全工程"
+      "placeholder": "例如 计算机科学与工程"
     },
     {
       "name": "destination",

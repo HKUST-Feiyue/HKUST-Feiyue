@@ -103,7 +103,7 @@ def render(meta, body, url):
     source = shared_chrome((ROOT / "index.html").read_text(encoding="utf-8"), "article", "../", meta["category"])
     source = source.replace("<body data-pagefind-ignore>", "<body>", 1)
     title = html.escape(display_title(meta))
-    source = re.sub(r'<title>.*?</title>', lambda _: f'<title>{title} · UEM Feiyue</title>', source, count=1, flags=re.S)
+    source = re.sub(r'<title>.*?</title>', lambda _: f'<title>{title} · HKUST Feiyue</title>', source, count=1, flags=re.S)
     description = html.escape(str(meta.get("excerpt") or display_title(meta)), quote=True)
     source = re.sub(r'<meta name="description"[^>]*>', lambda _: f'<meta name="description" content="{description}">', source, count=1)
     content = f'<article class="article-page"><a class="article-back" href="../?category={quote(str(meta["category"]))}"><span class="link-arrow link-arrow-left" aria-hidden="true"></span> 返回{html.escape(CATEGORIES[meta["category"]])}</a><h1 data-pagefind-meta="title">{title}</h1>{demo}<p class="article-byline" data-pagefind-meta="byline">{byline}</p>{toc}<div class="article-body" data-pagefind-body>{clean}</div>{contact}</article>'

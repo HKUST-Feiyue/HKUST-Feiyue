@@ -28,12 +28,12 @@
     const next = modes[(modes.indexOf(mode) + 1) % modes.length];
     if (next === 'system') delete root.dataset.theme;
     else root.dataset.theme = next;
-    try { localStorage.setItem('uem-theme', next); } catch {}
+    try { localStorage.setItem('hkust-theme', next); } catch {}
     syncThemeControls();
   });
   systemTheme.addEventListener('change', syncThemeControls);
   window.addEventListener('storage', event => {
-    if (event.key !== 'uem-theme') return;
+    if (event.key !== 'hkust-theme') return;
     if (event.newValue === 'light' || event.newValue === 'dark') root.dataset.theme = event.newValue;
     else delete root.dataset.theme;
     syncThemeControls();

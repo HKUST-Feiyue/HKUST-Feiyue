@@ -1,4 +1,4 @@
-"""Import only a reviewed, completed UEM GitHub Issue into canonical Markdown."""
+"""Import only a reviewed, completed HKUST GitHub Issue into canonical Markdown."""
 import base64
 import json
 import os
@@ -12,8 +12,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = json.loads((ROOT / "data/schema.json").read_text(encoding="utf-8"))
-MARKER = re.compile(r"^<!-- uem-submission-v2:([A-Za-z0-9_-]+):([A-Za-z0-9_-]+) -->$", re.M)
-SIGNING_CONTEXT = b"UEM-Feiyue:submission:v2:"
+MARKER = re.compile(r"^<!-- hkust-submission-v2:([A-Za-z0-9_-]+):([A-Za-z0-9_-]+) -->$", re.M)
+SIGNING_CONTEXT = b"HKUST-Feiyue:submission:v2:"
 TEAMS = {category["id"]: category["reviewTeam"] for category in SCHEMA["categories"]}
 ISSUE_PREFIX = "[飞跃手册投稿] "
 
@@ -52,7 +52,7 @@ def decode_issue(issue, private_key=None):
     raw = base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4))
     if base64.urlsafe_b64encode(raw).decode().rstrip("=") != encoded:
         raise ValueError("Noncanonical submission encoding")
-    pem = private_key or os.getenv("UEM_APP_PRIVATE_KEY")
+    pem = private_key or os.getenv("HKUST_APP_PRIVATE_KEY")
     if not pem:
         raise ValueError("Submission signature key is missing")
     key = serialization.load_pem_private_key(pem.replace("\\n", "\n").encode(), password=None)
@@ -80,7 +80,7 @@ def import_event(event, root=ROOT, private_key=None):
     issue = event["issue"]
     if issue.get("pull_request") or not isinstance(issue.get("number"), int) or not (1 <= issue["number"] <= 9999999):
         raise ValueError("Invalid Issue")
-    if event.get("repository", {}).get("full_name") != "UEM-Feiyue/UEM-Feiyue":
+    if event.get("repository", {}).get("full_name") != "HKUST-Feiyue/HKUST-Feiyue":
         raise ValueError("Wrong repository")
     record = decode_issue(issue, private_key)
     target = root / "content" / "community" / ("issue-" + str(issue["number"]) + ".md")

@@ -1,6 +1,6 @@
 /* Public-only settings. Secrets belong exclusively to Cloudflare Worker. */
-window.UEM_SUBMISSION_CONFIG = Object.freeze({
+window.HKUST_SUBMISSION_CONFIG = Object.freeze({
   enabled: true,
-  apiEndpoint: 'https://uem-feiyue-submissions.futseyi.workers.dev/submit',
-  turnstileSiteKey: '0x4AAAAAAF0mPF3IQrkSm1S9'
+  apiEndpoint: 'https://hkust-feiyue-submissions.futseyi.workers.dev/submit',
+  turnstileSiteKey: '0x4AAAAAAGQTBxcAxDK7wpD3'
 });

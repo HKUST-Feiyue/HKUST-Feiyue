@@ -1431,7 +1431,7 @@ proportions; no composition, mask, crop or duplicate seal. */
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 1226/285;
+  aspect-ratio: 498/94;
   max-width: 215px;
 }
 
@@ -1448,7 +1448,7 @@ proportions; no composition, mask, crop or duplicate seal. */
   height: clamp(270px,30vw,440px);
   background-color: var(--soft);
   background-image: linear-gradient(to bottom,transparent 70%,var(--bg) 100%),
-    var(--banner-tint),url("../images/anguo-garden.jpg");
+    var(--banner-tint),url("../images/hkust-campus.jpg");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center,center,center 43%;
@@ -1534,7 +1534,7 @@ proportions; no composition, mask, crop or duplicate seal. */
   border-color: var(--accent);
 }
 
-/* HAI's two-column footer structure; colors and surface belong to UEM's theme. */
+/* HAI's two-column footer structure; colors and surface belong to HKUST's theme. */
 .site-footer {
   flex: none;
   background: linear-gradient(to bottom,var(--bg),var(--surface) 80px);
@@ -1695,7 +1695,7 @@ proportions; no composition, mask, crop or duplicate seal. */
   .campus-banner {
   background-image: linear-gradient(to bottom,var(--surface),transparent 80px),
     linear-gradient(to bottom,transparent 70%,var(--bg) 100%),
-    var(--banner-tint),url("../images/anguo-garden.jpg");
+    var(--banner-tint),url("../images/hkust-campus.jpg");
   background-position: center,center,center,center 43%;
   }
 

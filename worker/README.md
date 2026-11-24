@@ -1,17 +1,17 @@
-# UEM Feiyue submission Worker
+# HKUST Feiyue submission Worker
 
 This independent Cloudflare Worker accepts submissions from the production origin
-`https://uem-feiyue.github.io` and creates **public GitHub Issues** in
-`UEM-Feiyue/UEM-Feiyue`. It never edits published articles or bypasses
+`https://hkust-feiyue.github.io` and creates **public GitHub Issues** in
+`HKUST-Feiyue/HKUST-Feiyue`. It never edits published articles or bypasses
 maintainer review.
 
 ## Configuration
 
-- Worker name: `uem-feiyue-submissions`.
+- Worker name: `hkust-feiyue-submissions`.
 - API: `POST /submit`; public liveness endpoint: `GET /health`.
-- Cloudflare Turnstile widget: restrict to `uem-feiyue.github.io`, action `uem_feiyue_submit`.
+- Cloudflare Turnstile widget: restrict to `hkust-feiyue.github.io`, action `hkust_feiyue_submit`.
 - Worker secrets: `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY` (PKCS#8 PEM), and `TURNSTILE_SECRET`. Never commit their values.
-- The UEM Feiyue Automation App must be installed only on Source and Published, with Contents write, Issues write, and organization Members read. The Worker requests a Source-only, Issues-only installation token.
+- The HKUST Feiyue Automation App must be installed only on Source and Published, with Contents write, Issues write, and organization Members read. The Worker requests a Source-only, Issues-only installation token.
 - Create the GitHub label `submission:pending` before enabling public submissions.
 - The native rate limit binding is edge-local: three attempts per minute per IP, not a globally strict quota. The configuration's numeric namespace ID is local to this Worker; ensure it does not collide with another binding in the Cloudflare account.
 - Allowlist the exact production origin only; no wildcard, no preview environment.
@@ -40,7 +40,7 @@ Successful creation returns HTTP 201:
 A success response means **an Issue exists**, not that the story was approved
 or published. Issues are public immediately, including any voluntarily
 provided contact information. The Issue body includes an auditable
-`uem-submission-v2` data marker signed by the GitHub App key. The importer verifies this signature before trusting the category or content.
+`hkust-submission-v2` data marker signed by the GitHub App key. The importer verifies this signature before trusting the category or content.
 Never publish directly from this untrusted Worker.
 
 The submission UI has a public configuration in `assets/js/submission-config.js`,
@@ -48,7 +48,7 @@ including the public Site Key and Worker endpoint. Its public `enabled` switch i
 still depends on Cloudflare `SUBMISSION_MODE=public` and `SUBMISSIONS_DISABLED=false`.
 Do not treat the public browser switch as a security boundary.
 The trusted GitHub Actions importer in `scripts/import_completed_submission.py`
-creates `content/community/issue-<number>.md` only for App-created, signed UEM submission Issues
+creates `content/community/issue-<number>.md` only for App-created, signed HKUST submission Issues
 closed **as completed by a member of the signed category's review Team or an organization Owner** in Source. Ordinary closures, PRs, invalid markers,
 unauthorized reviewers and duplicate imports do not publish. A successful import pushes
 Markdown to main, triggering the existing static site deployment. GitHub Actions

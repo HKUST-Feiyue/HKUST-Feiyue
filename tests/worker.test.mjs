@@ -15,7 +15,7 @@ const valid = {
   destination: '某科技公司', program: '软件工程师',
   body: '我准备了项目经历和面试。', contact: '', turnstileToken: 'sample-token'
 };
-const request = (body = valid, origin = 'https://uem-feiyue.github.io') =>
+const request = (body = valid, origin = 'https://hkust-feiyue.github.io') =>
   new Request('https://worker.example/submit', {
     method: 'POST',
     headers: { Origin: origin, 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.1' },
@@ -37,9 +37,9 @@ test('renders a signed, reviewable Issue', async () => {
   const issue = await issueFor(validate(valid), signingKey);
   assert.match(issue.title, /^\[飞跃手册投稿\]/);
   assert.deepEqual(issue.labels, ['submission:pending']);
-  assert.match(issue.body, /uem-submission-v2:/);
+  assert.match(issue.body, /hkust-submission-v2:/);
   assert.match(issue.body, /^\*\*方向：\*\* 就业/m);
-  assert.match(issue.body, /\n---\n\n\*\*已分配至：\*\* @UEM-Feiyue\/career-reviewers\n\n<!-- uem-submission-v2:/);
+  assert.match(issue.body, /\n---\n\n\*\*已分配至：\*\* @HKUST-Feiyue\/career-reviewers\n\n<!-- hkust-submission-v2:/);
   assert.doesNotMatch(issue.body, /飞跃手册经历投稿（待审核）|公开投稿，内容尚未经核实|\*\*审核组：\*\*/);
   assert.doesNotMatch(issue.body, /sample-token/);
 });
@@ -77,11 +77,11 @@ test('valid verified submission creates one pending Issue', async () => {
   globalThis.fetch = async (url, options) => {
     calls.push({ url: String(url), options });
     if (String(url).includes('turnstile')) return Response.json({
-      success: true, hostname: 'uem-feiyue.github.io', action: 'uem_feiyue_submit'
+      success: true, hostname: 'hkust-feiyue.github.io', action: 'hkust_feiyue_submit'
     });
     if (String(url).includes('access_tokens')) return Response.json({ token: 'installation-token' });
     return Response.json({
-      html_url: 'https://github.com/UEM-Feiyue/UEM-Feiyue/issues/57'
+      html_url: 'https://github.com/HKUST-Feiyue/HKUST-Feiyue/issues/57'
     }, { status: 201 });
   };
   try {
@@ -98,7 +98,7 @@ test('valid verified submission creates one pending Issue', async () => {
     assert.equal(calls[2].options.headers.Authorization, 'Bearer installation-token');
     const body = JSON.parse(calls[2].options.body);
     assert.deepEqual(body.labels, ['submission:pending']);
-    assert.match(body.body, /uem-submission-v2:/);
+    assert.match(body.body, /hkust-submission-v2:/);
     assert.doesNotMatch(body.body, /sample-token/);
   } finally { globalThis.fetch = originalFetch; }
 });

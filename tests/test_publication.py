@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("uem_import", ROOT / "scripts/import_completed_submission.py")
+spec = importlib.util.spec_from_file_location("hkust_import", ROOT / "scripts/import_completed_submission.py")
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 
@@ -27,9 +27,9 @@ def fixture():
     signed = base64.urlsafe_b64encode(signature).decode().rstrip("=")
     issue = {"number": 57, "title": "[飞跃手册投稿] [就业] 张同学 — 某企业 · 产品经理",
              "state_reason": "completed", "labels": [{"name": "submission:pending"}],
-             "body": "### 经历\n\n<!-- uem-submission-v2:" + payload + ":" + signed + " -->"}
+             "body": "### 经历\n\n<!-- hkust-submission-v2:" + payload + ":" + signed + " -->"}
     return {"action": "closed", "sender": {"login": "FuTseYi"},
-            "repository": {"full_name": "UEM-Feiyue/UEM-Feiyue"}, "issue": issue}
+            "repository": {"full_name": "HKUST-Feiyue/HKUST-Feiyue"}, "issue": issue}
 
 
 class PublicationTests(unittest.TestCase):
