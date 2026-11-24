@@ -387,7 +387,7 @@
           widgetId = window.turnstile.render(captchaHost, {
             sitekey: config.turnstileSiteKey,
             action: 'hkust_feiyue_submit',
-            language: i18n.language(),
+            language: i18n.language() === 'zh' ? 'zh-TW' : 'en',
             callback: () => {
               if (!submitting) {
                 submitButton.disabled = false;
