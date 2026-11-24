@@ -1,6 +1,6 @@
-# UEM-Feiyue
+# HKUST-Feiyue
 
-由同学共同维护的应急管理大学考研、留学、就业和考公考编经历分享站。本仓库是唯一的源码与构建入口；生成的静态文件发布到 [UEM-Feiyue.github.io](https://github.com/UEM-Feiyue/UEM-Feiyue.github.io)，由 [GitHub Pages](https://uem-feiyue.github.io/) 托管。
+由同学共同维护的香港科技大学考研、留学、就业和考公考编经历分享站。本仓库是唯一的源码与构建入口；生成的静态文件发布到 [HKUST-Feiyue.github.io](https://github.com/HKUST-Feiyue/HKUST-Feiyue.github.io)，由 [GitHub Pages](https://hkust-feiyue.github.io/) 托管。
 
 ## 网站功能
 
@@ -9,12 +9,12 @@
 - **社区投稿**：Cloudflare Worker 校验投稿并创建 Source Issue；维护者以 **Close as completed** 审核后入库。
 - **阅读体验**：支持浅色、深色与系统主题、移动端导航、文章目录和减少动态效果设置。
 
-网站采用原创「应急蓝」视觉设计；所用蓝色不是经校方确认的标准色值。演示文章会明确标记，不代表真实投稿。
+网站复用 UEM 飞跃手册的页面设计与交互；所用配色不代表港科大官方标准色。演示文章会明确标记，不代表真实投稿。
 
 ## 项目结构
 
 ```text
-UEM-Feiyue/
+HKUST-Feiyue/
 ├── .github/workflows/  # PR 验证、审核入库和跨仓库发布
 ├── assets/             # 样式、脚本和图片
 ├── content/            # 文章与社区投稿 Markdown
@@ -49,7 +49,7 @@ python preview.py
 
 ## 构建与发布
 
-**Source**（本仓库）维护页面、文章、投稿审核和唯一的生产构建。**Published**（`UEM-Feiyue/UEM-Feiyue.github.io`）只保存构建结果；GitHub Pages 直接部署其 `main`，不在发布仓库重新构建。Published 的 `README.md` 由 [PUBLISHED_README.md](PUBLISHED_README.md) 生成。
+**Source**（本仓库）维护页面、文章、投稿审核和唯一的生产构建。**Published**（`HKUST-Feiyue/HKUST-Feiyue.github.io`）只保存构建结果；GitHub Pages 直接部署其 `main`，不在发布仓库重新构建。Published 的 `README.md` 由 [PUBLISHED_README.md](PUBLISHED_README.md) 生成。
 
 ```mermaid
 sequenceDiagram
@@ -101,6 +101,10 @@ sequenceDiagram
 - [worker/README.md](worker/README.md)：Worker 部署与投稿安全配置
 - [PUBLISHED_README.md](PUBLISHED_README.md)：Published README 的唯一来源
 
-欢迎通过 [Issues](https://github.com/UEM-Feiyue/UEM-Feiyue/issues) 反馈资料问题，或通过 [Pull Requests](https://github.com/UEM-Feiyue/UEM-Feiyue/pulls) 参与共建。
+欢迎通过 [Issues](https://github.com/HKUST-Feiyue/HKUST-Feiyue/issues) 反馈资料问题，或通过 [Pull Requests](https://github.com/HKUST-Feiyue/HKUST-Feiyue/pulls) 参与共建。
 
 **Every line of code should justify its existence. Define once. Reuse everywhere.**
+
+## 复用与素材来源
+
+本站从 [UEM 飞跃手册](https://github.com/UEM-Feiyue/UEM-Feiyue) 保留完整提交历史迁移，沿用原有四类经历、投稿字段与发布机制。横版标识及 favicon 由维护者提供；校园横幅来自 [HKUST Visit](https://hkust.edu.hk/visit)。演示内容用于展示功能，不代表港科大学生的真实经历。

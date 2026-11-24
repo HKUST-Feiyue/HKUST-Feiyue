@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-spec = importlib.util.spec_from_file_location("uem_build", ROOT / "scripts" / "build.py")
+spec = importlib.util.spec_from_file_location("hkust_build", ROOT / "scripts" / "build.py")
 build = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(build)
 
@@ -17,7 +17,7 @@ class SubmissionBuildTests(unittest.TestCase):
         stylesheet = "".join((ROOT / "assets/css/site.css").read_text(encoding="utf-8").split())
         homepage = (ROOT / "index.html").read_text(encoding="utf-8")
         submission = (ROOT / "submit.html").read_text(encoding="utf-8")
-        self.assertIn('url("../images/anguo-garden.jpg")', stylesheet)
+        self.assertIn('url("../images/hkust-campus.jpg")', stylesheet)
         self.assertIn(".campus-banner{", stylesheet)
         self.assertIn("background-size:cover", stylesheet)
         self.assertIn("height:clamp(270px,30vw,440px)", stylesheet)
@@ -36,7 +36,7 @@ class SubmissionBuildTests(unittest.TestCase):
         self.assertIn('class="campus-banner"', submission)
         article = build.render({"category": "career", "author": "同学", "year": "2026", "destination": "企业"}, "## 正文", "articles/test.html")
         self.assertIn('class="campus-banner"', article)
-        self.assertIn('rel="preload" as="image" href="../assets/images/anguo-garden.jpg"', article)
+        self.assertIn('rel="preload" as="image" href="../assets/images/hkust-campus.jpg"', article)
         self.assertIn(".site-footer{flex:none;background:linear-gradient(tobottom,var(--bg),var(--surface)80px)", stylesheet)
         for page in (homepage, submission):
             self.assertIn('data-site-footer', page)
@@ -114,8 +114,8 @@ class SubmissionBuildTests(unittest.TestCase):
         meta = {"category": "career", "author": "同学", "year": "2026", "destination": "企业"}
         page = build.render(meta, "## 正文", "articles/example.html")
         self.assertIn('../assets/icons/favicon.svg', page)
-        self.assertIn('class="brand-logo" src="../assets/images/favicon-横版.png"', page)
-        self.assertIn('class="mobile-brand-logo" src="../assets/images/favicon-横版.png"', page)
+        self.assertIn('class="brand-logo" src="../assets/images/hkust-horizontal.svg"', page)
+        self.assertIn('class="mobile-brand-logo" src="../assets/images/hkust-horizontal.svg"', page)
         self.assertNotIn('brand-wordmark', page)
         self.assertNotIn('brand-seal', page)
         stylesheet = "".join((ROOT / "assets/css/site.css").read_text(encoding="utf-8").split())

@@ -1,4 +1,4 @@
-"""UEM business build: sanitized Markdown articles and archive data."""
+"""HKUST business build: sanitized Markdown articles and archive data."""
 import shutil
 import subprocess
 import sys

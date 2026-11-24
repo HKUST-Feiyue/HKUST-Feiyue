@@ -50,8 +50,8 @@ jobs:
         with:
           app-id: ${{ vars.PUBLISH_APP_ID }}
           private-key: ${{ secrets.PUBLISH_APP_PRIVATE_KEY }}
-          owner: UEM-Feiyue
-          repositories: UEM-Feiyue.github.io
+          owner: HKUST-Feiyue
+          repositories: HKUST-Feiyue.github.io
           permission-contents: write
       - name: Resolve publishing bot identity
         id: bot
@@ -62,7 +62,7 @@ jobs:
       - name: Check out Published
         uses: actions/checkout@v4
         with:
-          repository: UEM-Feiyue/UEM-Feiyue.github.io
+          repository: HKUST-Feiyue/HKUST-Feiyue.github.io
           ref: main
           token: ${{ steps.app.outputs.token }}
           path: published

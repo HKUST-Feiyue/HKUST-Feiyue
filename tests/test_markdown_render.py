@@ -15,7 +15,7 @@ class MarkdownPublicationTests(unittest.TestCase):
             "## 一、前期准备\n\n"
             "准备阶段整理目标院校。\n\n"
             "1. 基础阶段\n2. 强化阶段\n3. 冲刺阶段\n\n"
-            "**测试标记：UEM-QA-POSTGRAD-001**"
+            "**测试标记：HKUST-QA-POSTGRAD-001**"
         )
         rendered = render_markdown(body)
         self.assertIn("<blockquote>", rendered)

@@ -271,7 +271,7 @@ class PreviewTests(unittest.TestCase):
                         response = connection.getresponse()
                         self.assertEqual(response.status, 200)
                         self.assertEqual(response.getheader("Cache-Control"), "no-store")
-                        self.assertEqual(response.read(), b"window.UEM_SUBMISSION_CONFIG={enabled:false,localPreview:true};\n" if method == "GET" else b"")
+                        self.assertEqual(response.read(), b"window.HKUST_SUBMISSION_CONFIG={enabled:false,localPreview:true};\n" if method == "GET" else b"")
                     connection.request("GET", "/missing.html")
                     response = connection.getresponse()
                     self.assertEqual(response.status, 404)

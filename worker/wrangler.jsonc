@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "uem-feiyue-submissions",
+  "name": "hkust-feiyue-submissions",
   "main": "src/index.js",
   "compatibility_date": "2026-11-05",
   "workers_dev": true,
@@ -11,7 +11,7 @@
   "ratelimits": [
     {
       "name": "SUBMISSION_LIMITER",
-      "namespace_id": "20002",
+      "namespace_id": "20003",
       "simple": { "limit": 3, "period": 60 }
     }
   ]

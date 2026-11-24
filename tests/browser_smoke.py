@@ -1,4 +1,4 @@
-"""Exercise the complete UEM artifact, including its Pages project subpath."""
+"""Exercise the complete HKUST artifact, including its Pages project subpath."""
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -10,7 +10,7 @@ import time
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
-PREFIX = "/UEM-Feiyue.github.io"
+PREFIX = "/HKUST-Feiyue.github.io"
 sys.path.insert(0, str(ROOT))
 from preview import PreviewHandler
 
@@ -70,7 +70,7 @@ def main():
             for width in (320, 390, 900, 901, 1440, 1600):
                 for theme in ("light", "dark"):
                     context = browser.new_context(viewport={"width": width, "height": 900}, reduced_motion="reduce")
-                    context.add_init_script(f"localStorage.setItem('uem-theme', '{theme}')")
+                    context.add_init_script(f"localStorage.setItem('hkust-theme', '{theme}')")
                     page = context.new_page()
                     errors = []
                     page.on("pageerror", lambda error: errors.append(str(error)))
@@ -128,7 +128,7 @@ def main():
                     else:
                         assert page.locator(".topbar").is_hidden()
                         assert page.locator("#theme-toggle").is_visible()
-                    assert "anguo-garden.jpg" in background["bannerImage"]
+                    assert "hkust-campus.jpg" in background["bannerImage"]
                     assert all(value.strip() == "cover" for value in background["bannerSize"].split(","))
                     assert 220 <= background["bannerHeight"] <= 440
                     assert abs(background["bannerWidth"] - background["containerWidth"]) <= 1
@@ -142,7 +142,7 @@ def main():
                     brand = ".mobile-brand" if width <= 900 else ".sidebar .brand"
                     assert page.locator(brand).is_visible()
                     assert page.locator(brand + " img").evaluate(
-                        "el => el.naturalWidth === 1226 && el.naturalHeight === 285 && getComputedStyle(el).maskImage === 'none'"
+                        "el => el.complete && el.naturalWidth > 0 && el.getAttribute('width') === '498' && el.getAttribute('height') === '94' && getComputedStyle(el).maskImage === 'none'"
                     )
                     assert page.locator(".footer-logo").evaluate(
                         "el => getComputedStyle(el).backgroundColor === 'rgba(0, 0, 0, 0)' && getComputedStyle(el).paddingTop === '0px'"
@@ -164,7 +164,7 @@ def main():
                         assert page.locator(brand).evaluate(
                             "el => getComputedStyle(el).flexShrink === '0'"
                         )
-                        assert abs(before_scroll["width"] / before_scroll["height"] - 1226 / 285) < .015
+                        assert abs(before_scroll["width"] / before_scroll["height"] - 498 / 94) < .015
                     page.evaluate("window.scrollTo({top:document.documentElement.scrollHeight,behavior:'instant'})")
                     if page.evaluate("document.documentElement.scrollHeight - innerHeight > 100"):
                         page.wait_for_function("scrollY > 100")
@@ -368,7 +368,7 @@ def main():
                     # Closed-mode regression without contacting live Turnstile or Worker.
                     page.route("**/assets/js/submission-config.js*", lambda route: route.fulfill(
                         content_type="application/javascript",
-                        body="window.UEM_SUBMISSION_CONFIG={enabled:false};"
+                        body="window.HKUST_SUBMISSION_CONFIG={enabled:false};"
                     ))
                     page.goto(base + PREFIX + "/submit.html", wait_until="networkidle")
                     page.wait_for_selector("#body")
@@ -419,7 +419,7 @@ def main():
                     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 2")
                     assert errors == [], errors
                     context.close()
-                    print(f"UEM browser passed: {width}px, {theme}")
+                    print(f"HKUST browser passed: {width}px, {theme}")
             context = browser.new_context(reduced_motion="no-preference")
             page = context.new_page()
             Handler.script_delay = 2
@@ -518,7 +518,7 @@ def main():
             }
             page.route("**/assets/js/submission-config.js*", lambda route: route.fulfill(
                 content_type="application/javascript",
-                body="window.UEM_SUBMISSION_CONFIG={enabled:false};"
+                body="window.HKUST_SUBMISSION_CONFIG={enabled:false};"
             ))
             page.goto(base + PREFIX + "/submit.html", wait_until="networkidle")
             page.locator("#category").select_option("kaoyan")
@@ -527,7 +527,7 @@ def main():
             page.locator("#college").fill("某学院")
             page.locator("#major").fill("某专业")
             page.locator("#destination").fill("某理工类高校")
-            page.locator("#program").fill("安全工程相关专业")
+            page.locator("#program").fill("计算机科学与工程相关专业")
             page.locator("#body").fill(demo_body)
             page.locator("#preview-button").click()
             assert page.locator("#preview").is_visible()
@@ -543,7 +543,7 @@ def main():
             # Both the inline editor and the full article preview must render them.
             quoted = ("> 本文仅用于系统测试，不代表真实录取。\n\n"
                       "## 一、前期准备\n\n1. 基础\n2. 强化\n\n"
-                      "**测试标记：UEM-QA-POSTGRAD-001**")
+                      "**测试标记：HKUST-QA-POSTGRAD-001**")
             page.locator("#body").fill(quoted)
             page.locator("#preview-button").click()
             quote = page.locator("#preview-text .article-body blockquote")
@@ -608,7 +608,7 @@ def main():
             submissions = []
             page.route("**/assets/js/submission-config.js*", lambda route: route.fulfill(
                 content_type="application/javascript",
-                body="window.UEM_SUBMISSION_CONFIG={enabled:true,apiEndpoint:'https://uem-feiyue-submissions.futseyi.workers.dev/submit',turnstileSiteKey:'test-site-key'};"
+                body="window.HKUST_SUBMISSION_CONFIG={enabled:true,apiEndpoint:'https://hkust-feiyue-submissions.futseyi.workers.dev/submit',turnstileSiteKey:'test-site-key'};"
             ))
             page.route("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit",
                        lambda route: route.fulfill(content_type="application/javascript",
@@ -617,8 +617,8 @@ def main():
                 submissions.append(route.request.post_data_json)
                 route.fulfill(status=201, content_type="application/json",
                               headers={"Access-Control-Allow-Origin": base},
-                              body=json.dumps({"ok": True, "issueUrl": "https://github.com/UEM-Feiyue/UEM-Feiyue/issues/57"}))
-            page.route("https://uem-feiyue-submissions.futseyi.workers.dev/submit", accept_submission)
+                              body=json.dumps({"ok": True, "issueUrl": "https://github.com/HKUST-Feiyue/HKUST-Feiyue/issues/57"}))
+            page.route("https://hkust-feiyue-submissions.futseyi.workers.dev/submit", accept_submission)
             page.goto(base + "/submit.html", wait_until="networkidle")
             page.wait_for_selector("#body")
             page.locator("#category").select_option("career")

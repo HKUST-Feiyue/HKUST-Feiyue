@@ -53,7 +53,7 @@ class PreviewHandler(SimpleHTTPRequestHandler):
 
     def send_head(self):
         if urlsplit(self.path).path == "/assets/js/submission-config.js":
-            content = b"window.UEM_SUBMISSION_CONFIG={enabled:false,localPreview:true};\n"
+            content = b"window.HKUST_SUBMISSION_CONFIG={enabled:false,localPreview:true};\n"
             self.send_response(200)
             self.send_header("Content-Type", "application/javascript; charset=utf-8")
             self.send_header("Content-Length", str(len(content)))

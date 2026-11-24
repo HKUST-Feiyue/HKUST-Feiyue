@@ -1,6 +1,6 @@
 # Engineering principles
 
-Source (`UEM-Feiyue/UEM-Feiyue`) owns code, content, workflows, and build logic. Published (`UEM-Feiyue/UEM-Feiyue.github.io`) contains generated static output only; never edit it directly. `PUBLISHED_README.md` supplies its README. Do not commit `_site/` to Source. See `README.md` for the publishing topology and `PREVIEW.md` for operating steps.
+Source (`HKUST-Feiyue/HKUST-Feiyue`) owns code, content, workflows, and build logic. Published (`HKUST-Feiyue/HKUST-Feiyue.github.io`) contains generated static output only; never edit it directly. `PUBLISHED_README.md` supplies its README. Do not commit `_site/` to Source. See `README.md` for the publishing topology and `PREVIEW.md` for operating steps.
 
 1. Every line of code should justify its existence. Define once; reuse everywhere.
 2. Keep the site static and accessible. Prefer HTML/CSS/vanilla JS. Add dependencies only when a real requirement justifies them.
@@ -11,10 +11,10 @@ Source (`UEM-Feiyue/UEM-Feiyue`) owns code, content, workflows, and build logic.
 7. Public GitHub Issues expose submitted content including optional contact details. Show a plain-language warning next to the form.
 8. Use semantic markup, keyboard-accessible controls, responsive layouts, reduced-motion support, and readable contrast.
 9. Browser previews and published pages must reuse `.article-page`, `.article-body`, headings, byline, and TOC structure. Preserve an automated browser comparison against published Markdown and do not add preview-only typography overrides. Use the same native collapsible article table of contents in preview and publication; highlight reading position without custom framework dependencies. Client Marked and server Python Markdown remain different parsers; document unsupported edge syntax rather than claiming byte-identical HTML. Changes must resolve root causes, not accumulate patches. Use one coherent PR for material engineering changes; routine content maintenance may use direct commits.
-10. The emergency-blue palette is a custom interpretation until official UEM visual identity color values are verified.
+10. Preserve the inherited site palette; do not claim its values are official HKUST brand colors.
 
-11. Branding: reuse the original `assets/images/favicon-横版.png` unchanged on desktop and mobile. Never split, mask or clip it. Reuse `assets/icons/favicon.svg` for favicons and the footer without adding a white disc.
-12. Layout: use `assets/images/anguo-garden.jpg` only for the shared top banner, with aspect-preserving `background-size: cover`, never as a fixed full-page background. Keep reading surfaces opaque. Desktop has a viewport-fixed sidebar isolated from document scrolling with a matching page offset; mobile has one 72px topbar and a single overlay menu.
+11. Branding: reuse the original `assets/images/hkust-horizontal.svg` unchanged on desktop and mobile. Never split, mask or clip it. Reuse `assets/icons/favicon.svg` for favicons and the footer without adding a white disc.
+12. Layout: use `assets/images/hkust-campus.jpg` only for the shared top banner, with aspect-preserving `background-size: cover`, never as a fixed full-page background. Keep reading surfaces opaque. Desktop has a viewport-fixed sidebar isolated from document scrolling with a matching page offset; mobile has one 72px topbar and a single overlay menu.
 13. Navigation: one source of menu open/closed state, with a transition-free reset before internal page navigation and on BFCache restoration. Do not add cross-document root transitions, another menu runtime or a framework.
 14. Theme and footer: a single system/light/dark control in the sidebar; initialize the saved theme before CSS paints. The shared footer uses the same design tokens as the site, with no parallel footer palette variables.
 15. Styles: group component rules by responsibility, retain one authoritative declaration per selector per context, and collect responsive styles under the existing breakpoints. Prefer deleting superseded code to appending more overrides. Preserve meaningful browser behavior tests rather than testing source formatting.

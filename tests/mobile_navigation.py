@@ -1,4 +1,4 @@
-"""Mobile WebKit regression for stable UEM headers and navigation."""
+"""Mobile WebKit regression for stable HKUST headers and navigation."""
 from functools import partial
 from http.server import ThreadingHTTPServer
 from threading import Thread
@@ -26,14 +26,14 @@ def main():
                         reduced_motion="no-preference",
                     )
                     context.add_init_script(
-                        f"localStorage.setItem('uem-theme', '{theme}')"
+                        f"localStorage.setItem('hkust-theme', '{theme}')"
                     )
                     page = context.new_page()
                     # Keep the navigation regression offline: the production Turnstile
                     # widget intentionally refuses cross-origin localhost iframes.
                     page.route("**/assets/js/submission-config.js*", lambda route: route.fulfill(
                         content_type="application/javascript",
-                        body="window.UEM_SUBMISSION_CONFIG={enabled:false};",
+                        body="window.HKUST_SUBMISSION_CONFIG={enabled:false};",
                     ))
                     errors = []
                     page.on("pageerror", lambda error: errors.append(str(error)))
@@ -49,7 +49,7 @@ def main():
                         "document.querySelector('.topbar').getBoundingClientRect().bottom) <= 1"
                     )
                     assert page.locator(".mobile-brand-logo").evaluate(
-                        "el => el.naturalWidth === 1226 && el.naturalHeight === 285 && getComputedStyle(el).maskImage === 'none'"
+                        "el => el.complete && el.naturalWidth > 0 && el.getAttribute('width') === '498' && el.getAttribute('height') === '94' && getComputedStyle(el).maskImage === 'none'"
                     )
                     assert page.locator(".footer-logo").evaluate(
                         "el => getComputedStyle(el).backgroundColor === 'rgba(0, 0, 0, 0)' && getComputedStyle(el).paddingTop === '0px'"
@@ -107,7 +107,7 @@ def main():
                     assert page.locator(".mobile-brand-logo").is_visible()
                     assert not errors, errors
                     context.close()
-                    print(f"UEM WebKit mobile navigation passed: {width}px, {theme}")
+                    print(f"HKUST WebKit mobile navigation passed: {width}px, {theme}")
             browser.close()
     finally:
         server.shutdown()

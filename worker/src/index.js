@@ -1,11 +1,11 @@
 /* Public submissions become GitHub Issues, never published articles. */
 import schema from '../../data/schema.json' with { type: 'json' };
 
-const ORIGINS = new Set(['https://uem-feiyue.github.io']);
-const REPOSITORY = 'UEM-Feiyue/UEM-Feiyue';
+const ORIGINS = new Set(['https://hkust-feiyue.github.io']);
+const REPOSITORY = 'HKUST-Feiyue/HKUST-Feiyue';
 const MAX_BYTES = 65536;
 const CONTROL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/;
-const SIGNING_CONTEXT = 'UEM-Feiyue:submission:v2:';
+const SIGNING_CONTEXT = 'HKUST-Feiyue:submission:v2:';
 
 function appBase64Url(bytes) {
   let value = '';
@@ -33,9 +33,9 @@ async function installationToken(env, key) {
     method: 'POST', headers: {
       Authorization: 'Bearer ' + input + '.' + signature,
       Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28',
-      'User-Agent': 'UEM-Feiyue-Submission'
+      'User-Agent': 'HKUST-Feiyue-Submission'
     },
-    body: JSON.stringify({ repositories: ['UEM-Feiyue'], permissions: { issues: 'write' } }),
+    body: JSON.stringify({ repositories: ['HKUST-Feiyue'], permissions: { issues: 'write' } }),
     signal: AbortSignal.timeout(10000)
   });
   if (!response.ok) throw Error('GitHub App token exchange failed: ' + response.status);
@@ -131,12 +131,12 @@ async function issueFor(record, key) {
     '### 经历正文', quote(record.body), '',
     '### 联系方式', record.contact ? quote(record.contact) : '> 未填写', '',
     '---', '',
-    '**已分配至：** @UEM-Feiyue/' + category.reviewTeam
+    '**已分配至：** @HKUST-Feiyue/' + category.reviewTeam
   ];
   const encoded = base64url(record);
   const signature = appBase64Url(new Uint8Array(await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key,
     new TextEncoder().encode(SIGNING_CONTEXT + encoded))));
-  lines.push('', '<!-- uem-submission-v2:' + encoded + ':' + signature + ' -->');
+  lines.push('', '<!-- hkust-submission-v2:' + encoded + ':' + signature + ' -->');
   return { title, body: lines.join('\n'), labels: ['submission:pending'] };
 }
 
@@ -144,7 +144,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === '/health' && request.method === 'GET')
-      return respond({ ok: true, service: 'uem-feiyue-submissions' });
+      return respond({ ok: true, service: 'hkust-feiyue-submissions' });
     if (url.pathname !== '/submit') return error('Not found', 404);
     const origin = request.headers.get('Origin');
     if (!ORIGINS.has(origin)) return error('Forbidden', 403);
@@ -198,7 +198,7 @@ export default {
     } catch { return reject('人机验证服务暂不可用。', 503); }
     if (verification?.success !== true ||
         verification.hostname !== new URL(origin).hostname ||
-        verification.action !== 'uem_feiyue_submit')
+        verification.action !== 'hkust_feiyue_submit')
       return reject('人机验证失败或已过期。', 403);
 
     let issue;
@@ -211,7 +211,7 @@ export default {
           'Authorization': 'Bearer ' + token,
           'Accept': 'application/vnd.github+json',
           'X-GitHub-Api-Version': '2022-11-28',
-          'User-Agent': 'UEM-Feiyue-Submission'
+          'User-Agent': 'HKUST-Feiyue-Submission'
         },
         body: JSON.stringify(await issueFor(record, key)),
         signal: AbortSignal.timeout(10000)

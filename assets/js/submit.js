@@ -6,7 +6,7 @@
   const previewText = document.querySelector('#preview-text');
   const button = document.querySelector('#preview-button');
   const draftStatus = document.querySelector('#draft-status');
-  const draftKey = 'uem-draft-v1';
+  const draftKey = 'hkust-draft-v1';
   const make = (tag, text) => {
     const node = document.createElement(tag);
     if (text != null) node.textContent = text;
@@ -355,7 +355,7 @@
     const submitButton = document.querySelector('#submit-button');
     const submitStatus = document.querySelector('#submission-status');
     const captchaHost = document.querySelector('#submission-turnstile');
-    const config = window.UEM_SUBMISSION_CONFIG || {};
+    const config = window.HKUST_SUBMISSION_CONFIG || {};
     const enabled = config.enabled === true &&
       /^https:\/\//.test(config.apiEndpoint || '') && Boolean(config.turnstileSiteKey);
     let widgetId = null;
@@ -374,7 +374,7 @@
         try {
           widgetId = window.turnstile.render(captchaHost, {
             sitekey: config.turnstileSiteKey,
-            action: 'uem_feiyue_submit',
+            action: 'hkust_feiyue_submit',
             callback: () => { if (!submitting) { submitButton.disabled = false; say('验证完成，可以投稿。', 'success'); } },
             'expired-callback': () => { submitButton.disabled = true; say('验证已过期，请重新验证。', 'error'); },
             'error-callback': () => { submitButton.disabled = true; say('人机验证暂不可用，请刷新重试。', 'error'); }
@@ -403,7 +403,7 @@
             body: JSON.stringify(payload)
           });
           const result = await response.json();
-          if (!response.ok || !result.ok || !/^https:\/\/github\.com\/UEM-Feiyue\/UEM-Feiyue\/issues\/\d+$/.test(result.issueUrl || ''))
+          if (!response.ok || !result.ok || !/^https:\/\/github\.com\/HKUST-Feiyue\/HKUST-Feiyue\/issues\/\d+$/.test(result.issueUrl || ''))
             throw new Error(result.message || '投稿未成功，请稍后再试。');
           form.reset();
           submitStatus.dataset.state = 'success';
