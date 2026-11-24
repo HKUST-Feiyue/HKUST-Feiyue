@@ -619,7 +619,7 @@ def main():
             ))
             page.route("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit",
                        lambda route: route.fulfill(content_type="application/javascript",
-                           body="window.turnstile={render:(_,o)=>{setTimeout(()=>o.callback(),0);return 'test-widget';},getResponse:()=> 'test-token',reset:()=>{},remove:()=>{}};"))
+                           body="window.turnstileLanguages=[];window.turnstile={render:(_,o)=>{window.turnstileLanguages.push(o.language);setTimeout(()=>o.callback(),0);return 'test-widget';},getResponse:()=> 'test-token',reset:()=>{},remove:()=>{}};"))
             def accept_submission(route):
                 submissions.append(route.request.post_data_json)
                 route.fulfill(status=201, content_type="application/json",
@@ -650,6 +650,7 @@ def main():
             assert submissions[0]["college"] == "某學院"
             assert submissions[0]["major"] == "某專業"
             assert submissions[0]["turnstileToken"] == "test-token"
+            assert page.evaluate('window.turnstileLanguages') == ['zh-TW', 'en', 'zh-TW']
             assert page.locator("#author").input_value() == ""
             context.close()
             # The actual preview server must not load Turnstile on localhost.
