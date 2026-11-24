@@ -18,9 +18,6 @@ CATEGORIES = {item["id"]: item["label"] for item in SCHEMA["categories"]}
 YEAR_SUFFIX = next(field.get("suffix", "") for field in SCHEMA["fields"] if field["name"] == "year")
 
 
-def display_year(value):
-    value = str(value).strip()
-    return value + (" " + YEAR_SUFFIX if re.fullmatch(r"[0-9]{4}", value) else "")
 def parse(path):
     source = path.read_text(encoding="utf-8")
     match = re.match(r"\A---\s*\n(.*?)\n---\s*\n(.*)\Z", source, re.S)
@@ -56,6 +53,15 @@ def display_title(meta):
     title = str(meta.get("destination") or "").strip()
     program = str(meta.get("program") or "").strip()
     return title + (" · " + program if program else "")
+
+
+def ui(key, **params):
+    value = key.format_map(params)
+    return f'<span data-i18n="{html.escape(key, quote=True)}" data-i18n-params="{html.escape(json.dumps(params, ensure_ascii=False), quote=True)}">{html.escape(value)}</span>'
+
+
+def original(value):
+    return f'<span data-i18n-ignore>{html.escape(str(value))}</span>'
 
 
 def shared_chrome(source, page, prefix="./", category=None):
@@ -95,18 +101,18 @@ def shared_chrome(source, page, prefix="./", category=None):
 
 def render(meta, body, url):
     clean = render_markdown(body)
-    byline = " · ".join(html.escape(display_year(meta[k]) if k == "year" else str(meta[k])) for k in ("author", "year", "college", "major") if meta.get(k))
+    byline = " · ".join(ui('{year} ' + YEAR_SUFFIX, year=meta[k]) if k == "year" else original(meta[k]) for k in ("author", "year", "college", "major") if meta.get(k))
     headings = re.findall(r'<h([23]) id="([^"]+)">(.+?)</h[23]>', clean)
-    toc = '<details class="article-toc"><summary>本页目录</summary><div class="article-toc-panel"><div class="article-toc-clip"><ul>' + ''.join(f'<li class="toc-depth-{level}"><a href="#{html.escape(anchor, quote=True)}">{text}</a></li>' for level, anchor, text in headings) + '</ul></div></div></details>' if len(headings) >= 2 else ''
+    toc = '<details class="article-toc"><summary>本页目录</summary><div class="article-toc-panel"><div class="article-toc-clip"><ul>' + ''.join(f'<li class="toc-depth-{level}"><a data-i18n-ignore href="#{html.escape(anchor, quote=True)}">{text}</a></li>' for level, anchor, text in headings) + '</ul></div></div></details>' if len(headings) >= 2 else ''
     demo = '<span class="demo-badge">演示</span>' if meta.get('demo') is True else ''
-    contact = f'<aside class="article-contact"><strong>联系作者</strong><p>{html.escape(str(meta["contact"]))}</p></aside>' if meta.get("contact") else ""
+    contact = f'<aside class="article-contact"><strong>联系作者</strong><p data-i18n-ignore>{html.escape(str(meta["contact"]))}</p></aside>' if meta.get("contact") else ""
     source = shared_chrome((ROOT / "index.html").read_text(encoding="utf-8"), "article", "../", meta["category"])
     source = source.replace("<body data-pagefind-ignore>", "<body>", 1)
     title = html.escape(display_title(meta))
-    source = re.sub(r'<title>.*?</title>', lambda _: f'<title>{title} · HKUST Feiyue</title>', source, count=1, flags=re.S)
+    source = re.sub(r'<title>.*?</title>', lambda _: f'<title data-i18n-ignore>{title} · HKUST Feiyue</title>', source, count=1, flags=re.S)
     description = html.escape(str(meta.get("excerpt") or display_title(meta)), quote=True)
-    source = re.sub(r'<meta name="description"[^>]*>', lambda _: f'<meta name="description" content="{description}">', source, count=1)
-    content = f'<article class="article-page"><a class="article-back" href="../?category={quote(str(meta["category"]))}"><span class="link-arrow link-arrow-left" aria-hidden="true"></span> 返回{html.escape(CATEGORIES[meta["category"]])}</a><h1 data-pagefind-meta="title">{title}</h1>{demo}<p class="article-byline" data-pagefind-meta="byline">{byline}</p>{toc}<div class="article-body" data-pagefind-body>{clean}</div>{contact}</article>'
+    source = re.sub(r'<meta name="description"[^>]*>', lambda _: f'<meta name="description" content="{description}" data-i18n-ignore>', source, count=1)
+    content = f'<article class="article-page"><a class="article-back" href="../?category={quote(str(meta["category"]))}"><span class="link-arrow link-arrow-left" aria-hidden="true"></span> {ui("返回{category}", category=CATEGORIES[meta["category"]])}</a><h1 data-pagefind-meta="title" data-i18n-ignore>{title}</h1>{demo}<p class="article-byline" data-pagefind-meta="byline">{byline}</p>{toc}<div class="article-body" data-pagefind-body>{clean}</div>{contact}</article>'
     return re.sub(r'(<main[^>]*>).*?(</main>)', lambda m: m[1] + content + m[2], source, count=1, flags=re.S)
 
 
@@ -116,12 +122,12 @@ def render_home(entries):
     for entry in entries:
         badge = '<span class="demo-badge">演示</span>' if entry["demo"] else ''
         esc = lambda value: html.escape(str(value), quote=True)
-        label = ' · '.join(filter(None, (entry["year"] + ' 届', entry["college"], entry["major"])))
-        cards.append(f'<article class="article-item" data-category="{esc(entry["category"])}" data-year="{esc(entry["year"])}" data-demo="{str(entry["demo"]).lower()}">{badge}<h3><a href="./{esc(entry["url"])}">{esc(entry["author"])} — {esc(entry["title"])}</a></h3><p class="article-meta">{esc(label)}</p><a class="article-more" href="./{esc(entry["url"])}">阅读全文<span class="link-arrow"></span></a></article>')
+        label = ' · '.join([ui('{year} ' + YEAR_SUFFIX, year=entry['year']), *(original(entry[k]) for k in ('college', 'major') if entry[k])])
+        cards.append(f'<article class="article-item" data-category="{esc(entry["category"])}" data-year="{esc(entry["year"])}" data-demo="{str(entry["demo"]).lower()}">{badge}<h3 data-i18n-ignore><a href="./{esc(entry["url"])}">{esc(entry["author"])} — {esc(entry["title"])}</a></h3><p class="article-meta">{label}</p><a class="article-more" href="./{esc(entry["url"])}">阅读全文<span class="link-arrow"></span></a></article>')
     source = re.sub(r'(<div id="articles"[^>]*>).*?(</div>)', lambda m: m[1] + ''.join(cards) + m[2], source, count=1, flags=re.S)
     years = ''.join(f'<option value="{html.escape(year, quote=True)}">{html.escape(year)}</option>' for year in sorted({entry["year"] for entry in entries}, reverse=True))
     source = re.sub(r'(<select\b[^>]*\bid="year-filter"[^>]*>).*?(</select>)', lambda m: m[1] + '<option value="all">全部届次</option>' + years + m[2], source, count=1, flags=re.S)
-    count = f'{len(entries)} 篇经历' + (' · 含演示内容' if any(entry["demo"] for entry in entries) else '')
+    count = ui('{count} 篇经历', count=len(entries)) + (ui(' · 含演示内容') if any(entry["demo"] for entry in entries) else '')
     return re.sub(r'(<p id="results-count"[^>]*>).*?(</p>)', lambda m: m[1] + count + m[2], source, count=1, flags=re.S)
 
 

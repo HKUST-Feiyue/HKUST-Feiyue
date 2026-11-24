@@ -28,6 +28,7 @@ def main():
                     context.add_init_script(
                         f"localStorage.setItem('hkust-theme', '{theme}')"
                     )
+                    context.add_init_script("localStorage.setItem('hkust-feiyue-lang', 'zh')")
                     page = context.new_page()
                     # Keep the navigation regression offline: the production Turnstile
                     # widget intentionally refuses cross-origin localhost iframes.
