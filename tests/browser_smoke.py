@@ -44,6 +44,7 @@ def main():
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch()
             context = browser.new_context()
+            context.add_init_script("localStorage.setItem('hkust-feiyue-lang', 'zh')")
             page = context.new_page()
             for route in ("/", "/submit.html", "/community.html", *("/" + item["url"] for item in articles)):
                 page.goto(base + route, wait_until="domcontentloaded")
@@ -71,6 +72,7 @@ def main():
                 for theme in ("light", "dark"):
                     context = browser.new_context(viewport={"width": width, "height": 900}, reduced_motion="reduce")
                     context.add_init_script(f"localStorage.setItem('hkust-theme', '{theme}')")
+                    context.add_init_script("localStorage.setItem('hkust-feiyue-lang', 'zh')")
                     page = context.new_page()
                     errors = []
                     page.on("pageerror", lambda error: errors.append(str(error)))
@@ -234,7 +236,7 @@ def main():
                     if width in (390, 1440) and theme == "light":
                         page.screenshot(path=str(output / f"home-{width}.png"), full_page=True)
                     page.evaluate("window.__sameDocument = true")
-                    page.locator('#home-intro a').filter(has_text='浏览').first.click()
+                    page.locator('#home-intro a').filter(has_text="瀏覽").first.click()
                     assert page.evaluate("window.__sameDocument")
                     assert "view=all" in page.url
                     assert page.locator(".article-item:visible").count() == len(articles)
@@ -246,7 +248,7 @@ def main():
                         assert page.locator('#hero-title').evaluate(
                             "el => document.activeElement === el && getComputedStyle(el).outlineStyle === 'none'"
                         )
-                        page.locator('#home-intro a').filter(has_text='浏览').first.click()
+                        page.locator('#home-intro a').filter(has_text="瀏覽").first.click()
                     if width in (390, 1440) and theme == "light":
                         page.evaluate("scrollTo(0, document.body.scrollHeight)")
                         assert page.evaluate("scrollY > 0")
@@ -316,8 +318,8 @@ def main():
                         }""")
                     page.locator("#search").fill("no-matching-story-987654321")
                     assert page.locator(".article-item:visible").count() == visible_before_search
-                    page.wait_for_function("document.querySelector('#search-results').textContent.includes('没有找到匹配内容')")
-                    page.locator("#search").fill("简历修改")
+                    page.wait_for_function("document.querySelector('#search-results').textContent.includes('沒有找到匹配內容')")
+                    page.locator("#search").fill("簡歷修改")
                     page.locator("#search-results li a").first.wait_for(state="visible")
                     assert page.locator("#search-results .search-summary").inner_text().startswith("找到 ")
                     assert page.locator("#search-results .search-match mark").count() > 0
@@ -378,24 +380,24 @@ def main():
                     page.locator("#year").fill("2026")
                     assert page.locator(".education-fields legend").inner_text() == "在校信息"
                     assert not page.locator("#college").evaluate("el => el.checkValidity()")
-                    page.locator("#college").fill("某学院")
+                    page.locator("#college").fill("某學院")
                     assert not page.locator("#major").evaluate("el => el.checkValidity()")
-                    page.locator("#major").fill("某专业")
+                    page.locator("#major").fill("某專業")
                     page.locator("#destination").fill("Example institution")
                     assert page.locator("#year").evaluate("el => el.getBoundingClientRect().width < 120")
                     assert "hello@example.com" in page.locator("#contact").get_attribute("placeholder")
                     assert page.locator("#body").evaluate("el => el.getBoundingClientRect().height >= 240")
-                    page.locator("#body").fill(("## 复盘\\n\\n" + "过程很重要，经验可以复用。\\n") * 25)
+                    page.locator("#body").fill(("## 覆盤\\n\\n" + "過程很重要，經驗可以複用。\\n") * 25)
                     assert page.locator("#body").evaluate("el => el.scrollHeight <= el.clientHeight + 3")
                     page.locator("#body").fill("")
-                    page.locator(".demo-actions button").filter(has_text="载入示例").click()
+                    page.locator(".demo-actions button").filter(has_text="載入示例").click()
                     page.wait_for_function("document.querySelector('#body').value.startsWith('## ')")
                     assert page.locator(".markdown-help").get_attribute("open") is None
                     assert page.locator(".markdown-preview").is_hidden()
                     assert page.locator("#body").is_visible()
                     assert "Markdown" in page.locator(".markdown-help").inner_text()
                     page.locator(".markdown-help summary").click()
-                    assert "## 小标题" in page.locator(".markdown-help").inner_text()
+                    assert "## 小標題" in page.locator(".markdown-help").inner_text()
                     page.locator("#body").fill("")
                     page.locator("#body").fill("## Heading\n\n**Test body**\n\n<script>window.__unsafe = true</script>")
                     page.locator("#contact").fill("do-not-save@example.invalid")
@@ -404,13 +406,13 @@ def main():
                     assert page.locator("#preview .article-body strong").count() == 1, page.locator("#preview-text").inner_html()
                     assert page.locator("#preview .article-body strong").inner_text() == "Test body"
                     assert not page.evaluate("Boolean(window.__unsafe)")
-                    assert "公开 GitHub Issue" in page.locator(".notice").inner_text()
+                    assert "公開 GitHub Issue" in page.locator(".notice").inner_text()
                     assert page.locator(".form-wrap").evaluate("el => getComputedStyle(el).borderTopWidth") == "0px"
                     assert page.locator(".form-wrap").evaluate("el => getComputedStyle(el).boxShadow") == "none"
                     assert page.locator("#submit-button").is_visible()
                     assert page.locator("#submit-button").is_disabled()
                     assert page.locator("#submit-button").inner_text() == "投稿分享"
-                    assert "暂未开放" in page.locator("#submission-status").inner_text()
+                    assert "暫未開放" in page.locator("#submission-status").inner_text()
                     page.reload(wait_until="networkidle")
                     page.wait_for_selector("#body")
                     assert page.locator("#author").input_value() == "Browser test"
@@ -421,6 +423,7 @@ def main():
                     context.close()
                     print(f"HKUST browser passed: {width}px, {theme}")
             context = browser.new_context(reduced_motion="no-preference")
+            context.add_init_script("localStorage.setItem('hkust-feiyue-lang', 'zh')")
             page = context.new_page()
             Handler.script_delay = 2
             try:
@@ -433,7 +436,7 @@ def main():
                     heading: document.querySelector('#stories-heading').textContent
                 })""") == {
                     "active": "kaoyan", "homeHidden": True,
-                    "archiveHidden": False, "heading": "考研经历"
+                    "archiveHidden": False, "heading": "考研經歷"
                 }
                 page.wait_for_load_state("networkidle")
                 Handler.script_delay = 0
@@ -456,7 +459,7 @@ def main():
             page.keyboard.press("Control+k")
             page.locator('#search-dialog').wait_for(state="visible")
             page.locator('#search').fill('no-matching-story-987654321')
-            page.wait_for_function("document.querySelector('#search-results').textContent.includes('没有找到匹配内容')")
+            page.wait_for_function("document.querySelector('#search-results').textContent.includes('沒有找到匹配內容')")
             page.keyboard.press("Escape")
             page.locator('#search-dialog').wait_for(state="hidden")
             page.wait_for_function("document.querySelector('#search').value === ''")
@@ -469,8 +472,8 @@ def main():
             assert page.url.endswith('?view=all')
             page.goto(base + '/?category=kaoyan', wait_until='networkidle')
             page.locator('.search-open').click()
-            page.locator('#search').fill('周同学')
-            page.wait_for_function("document.querySelector('#search-results').textContent.includes('没有找到匹配内容')")
+            page.locator('#search').fill("周同學")
+            page.wait_for_function("document.querySelector('#search-results').textContent.includes('沒有找到匹配內容')")
             page.locator('.search-close').click()
             page.locator(".article-item:visible h3 a").first.click()
             page.wait_for_load_state("networkidle")
@@ -479,6 +482,7 @@ def main():
             assert errors == [], errors
             context.close()
             context = browser.new_context(java_script_enabled=False)
+            context.add_init_script("localStorage.setItem('hkust-feiyue-lang', 'zh')")
             page = context.new_page()
             for route in ("/", "/" + articles[0]["url"]):
                 page.goto(base + PREFIX + route)
@@ -493,6 +497,7 @@ def main():
             demo_source = (ROOT / "content/demo/demo-postgraduate.md").read_text(encoding="utf-8")
             demo_body = demo_source.split('---', 2)[2].strip()
             context = browser.new_context(reduced_motion="reduce")
+            context.add_init_script("localStorage.setItem('hkust-feiyue-lang', 'zh')")
             page = context.new_page()
             page.goto(base + PREFIX + "/articles/demo-postgraduate.html", wait_until="networkidle")
             def appearance(selector):
@@ -522,12 +527,12 @@ def main():
             ))
             page.goto(base + PREFIX + "/submit.html", wait_until="networkidle")
             page.locator("#category").select_option("kaoyan")
-            page.locator("#author").fill("林同学")
+            page.locator("#author").fill("林同學")
             page.locator("#year").fill("2026")
-            page.locator("#college").fill("某学院")
-            page.locator("#major").fill("某专业")
-            page.locator("#destination").fill("某理工类高校")
-            page.locator("#program").fill("计算机科学与工程相关专业")
+            page.locator("#college").fill("某學院")
+            page.locator("#major").fill("某專業")
+            page.locator("#destination").fill("某理工類高校")
+            page.locator("#program").fill("計算機科學與工程相關專業")
             page.locator("#body").fill(demo_body)
             page.locator("#preview-button").click()
             assert page.locator("#preview").is_visible()
@@ -541,44 +546,45 @@ def main():
             assert appearance("#preview-text > h1") == expected["title_style"]
             # Blockquotes are structural Markdown, not a literal leading '>'.
             # Both the inline editor and the full article preview must render them.
-            quoted = ("> 本文仅用于系统测试，不代表真实录取。\n\n"
-                      "## 一、前期准备\n\n1. 基础\n2. 强化\n\n"
-                      "**测试标记：HKUST-QA-POSTGRAD-001**")
+            quoted = ("> 本文僅用於系統測試，不代表真實錄取。\n\n"
+                      "## 一、前期準備\n\n1. 基礎\n2. 強化\n\n"
+                      "**測試標記：HKUST-QA-POSTGRAD-001**")
             page.locator("#body").fill(quoted)
             page.locator("#preview-button").click()
             quote = page.locator("#preview-text .article-body blockquote")
             assert quote.count() == 1
-            assert quote.inner_text() == "本文仅用于系统测试，不代表真实录取。"
+            assert quote.inner_text() == "本文僅用於系統測試，不代表真實錄取。"
             assert quote.evaluate("el => getComputedStyle(el).borderLeftStyle") == "solid"
             page.locator(".markdown-preview-toggle").click()
             assert page.locator(".markdown-preview blockquote").count() == 1
             context.close()
             # A phrase found only in the article body must be searchable.
             context = browser.new_context()
+            context.add_init_script("localStorage.setItem('hkust-feiyue-lang', 'zh')")
             page = context.new_page()
             page.goto(base + "/?view=all", wait_until="networkidle")
             page.locator(".search-open").click()
             page.locator("#search").fill("理工")
             page.wait_for_function("count => document.querySelectorAll('#search-results li a').length === count",
                                    arg=sum("理工" in item["title"] for item in articles))
-            page.locator("#search").fill("林同学")
+            page.locator("#search").fill("林同學")
             page.wait_for_function("document.querySelectorAll('#search-results li a').length === 1")
             assert page.locator("#search-results .search-title mark").count() == 1
             page.locator("#search").fill("2026")
             year_matches = sum(item["year"] == "2026" for item in articles)
             page.wait_for_function("count => document.querySelectorAll('#search-results li a').length === count", arg=year_matches)
             assert page.locator("#search-results .search-match mark").count() == year_matches
-            assert page.locator("#search-results .search-match").first.inner_text().startswith("2026 届")
-            page.locator("#search").fill("某学院")
-            page.wait_for_function("document.querySelector('#search-results .search-match mark')?.textContent === '某学院'")
-            college_matches = sum(item["college"] == "某学院" for item in articles)
+            assert page.locator("#search-results .search-match").first.inner_text().startswith("2026 屆")
+            page.locator("#search").fill("某學院")
+            page.wait_for_function("document.querySelector('#search-results .search-match mark')?.textContent === '某學院'")
+            college_matches = sum(item["college"] == "某學院" for item in articles)
             assert page.locator("#search-results li a").count() == college_matches
             assert page.locator("#search-results .search-match mark").count() == college_matches
-            page.locator("#search").fill("推荐信")
+            page.locator("#search").fill("推薦信")
             page.locator("#search-results li a").first.wait_for(state="visible")
             assert page.locator("#search-results li a").count() == 1
             assert "香港某高校" in page.locator("#search-results li a").inner_text()
-            assert "推荐信" in page.locator("#search-results .search-match").inner_text()
+            assert "推薦信" in page.locator("#search-results .search-match").inner_text()
             assert page.locator("#search-results .search-match mark").count() == 1
             assert page.locator("#search-results .search-title mark").count() == 0
             page.locator(".search-close").click()
@@ -589,7 +595,7 @@ def main():
                 "items => items.every(item => item.dataset.year === '2026')"
             )
             page.locator(".search-open").click()
-            page.locator("#search").fill("推荐信")
+            page.locator("#search").fill("推薦信")
             page.locator("#search-results li a").first.wait_for(state="visible")
             assert page.locator("#search-results li a").count() == 1
             page.locator("#search").fill("")
@@ -604,6 +610,7 @@ def main():
             # Mocked public mode: confirm the complete browser payload/feedback
             # without contacting Cloudflare or opening an actual GitHub Issue.
             context = browser.new_context()
+            context.add_init_script("localStorage.setItem('hkust-feiyue-lang', 'zh')")
             page = context.new_page()
             submissions = []
             page.route("**/assets/js/submission-config.js*", lambda route: route.fulfill(
@@ -612,7 +619,7 @@ def main():
             ))
             page.route("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit",
                        lambda route: route.fulfill(content_type="application/javascript",
-                           body="window.turnstile={render:(_,o)=>{setTimeout(()=>o.callback(),0);return 'test-widget';},getResponse:()=> 'test-token',reset:()=>{}};"))
+                           body="window.turnstileLanguages=[];window.turnstile={render:(_,o)=>{window.turnstileLanguages.push(o.language);setTimeout(()=>o.callback(),0);return 'test-widget';},getResponse:()=> 'test-token',reset:()=>{},remove:()=>{}};"))
             def accept_submission(route):
                 submissions.append(route.request.post_data_json)
                 route.fulfill(status=201, content_type="application/json",
@@ -622,22 +629,28 @@ def main():
             page.goto(base + "/submit.html", wait_until="networkidle")
             page.wait_for_selector("#body")
             page.locator("#category").select_option("career")
-            page.locator("#author").fill("测试同学")
+            page.locator("#author").fill("測試同學")
             page.locator("#year").fill("2026")
-            page.locator("#college").fill("某学院")
-            page.locator("#major").fill("某专业")
+            page.locator("#college").fill("某學院")
+            page.locator("#major").fill("某專業")
             page.locator("#destination").fill("某公司")
-            page.locator("#body").fill("## 完整经历\\n\\n测试内容")
+            page.locator("#body").fill("## 完整經歷\\n\\n測試內容")
             page.wait_for_function("!document.querySelector('#submit-button').disabled", timeout=10000)
+            page.locator(".language-toggle").click()
+            assert page.locator("#body").input_value() == "## 完整經歷\\n\\n測試內容"
+            page.wait_for_function("!document.querySelector('#submit-button').disabled")
             page.locator("#submit-button").click()
-            page.get_by_text("查看投稿记录").wait_for()
+            page.get_by_text("View submission").wait_for()
+            page.locator(".language-toggle").click()
+            page.get_by_text("查看投稿記錄").wait_for()
             assert page.locator("#submission-status").get_attribute("data-state") == "success"
             assert page.locator("#submit-button").inner_text() == "投稿分享"
             assert len(submissions) == 1
             assert submissions[0]["category"] == "career"
-            assert submissions[0]["college"] == "某学院"
-            assert submissions[0]["major"] == "某专业"
+            assert submissions[0]["college"] == "某學院"
+            assert submissions[0]["major"] == "某專業"
             assert submissions[0]["turnstileToken"] == "test-token"
+            assert page.evaluate('window.turnstileLanguages') == ['zh-TW', 'en', 'zh-TW']
             assert page.locator("#author").input_value() == ""
             context.close()
             # The actual preview server must not load Turnstile on localhost.
@@ -646,13 +659,14 @@ def main():
             preview_worker.start()
             try:
                 context = browser.new_context()
+                context.add_init_script("localStorage.setItem('hkust-feiyue-lang', 'zh')")
                 page = context.new_page()
                 cloudflare_requests = []
                 page.on("request", lambda request: cloudflare_requests.append(request.url) if "challenges.cloudflare.com" in request.url else None)
                 page.goto(f"http://127.0.0.1:{preview_server.server_port}/submit.html", wait_until="networkidle")
                 page.locator("#body").wait_for()
                 assert page.locator("#submit-button").is_disabled()
-                assert "本地预览" in page.locator("#submission-status").inner_text()
+                assert "本地預覽" in page.locator("#submission-status").inner_text()
                 assert cloudflare_requests == []
                 context.close()
             finally:
@@ -660,6 +674,7 @@ def main():
                 preview_worker.join()
                 preview_server.server_close()
             context = browser.new_context(viewport={"width": 390, "height": 844})
+            context.add_init_script("localStorage.setItem('hkust-feiyue-lang', 'zh')")
             page = context.new_page()
             page.goto(base + "/articles/demo-postgraduate.html", wait_until="networkidle")
             toc = page.locator(".article-toc")
@@ -681,11 +696,75 @@ def main():
             }""")
             context.close()
             browser.close()
+            check_languages(playwright, base, articles)
     finally:
         server.shutdown()
         worker.join()
         server.server_close()
 
+
+
+def check_languages(playwright, base, articles):
+    for engine, width in ((playwright.chromium, 1440), (playwright.webkit, 320)):
+        browser = engine.launch()
+        context = browser.new_context(viewport={"width": width, "height": 900})
+        context.route("**/assets/js/submission-config.js*", lambda route: route.fulfill(
+            content_type="application/javascript", body="window.HKUST_SUBMISSION_CONFIG={enabled:false};"))
+        page = context.new_page()
+        errors = []
+        page.on("pageerror", lambda error: errors.append(str(error)))
+        page.goto(base + PREFIX + "/", wait_until="networkidle")
+        assert page.locator("html").get_attribute("lang") == "en"
+        assert page.locator(".language-toggle").count() == 1
+        assert page.locator(".language-toggle").is_visible()
+        assert page.locator("#category-nav [data-category='career']").text_content() == "Careers"
+        page.goto(base + PREFIX + "/?category=career", wait_until="networkidle")
+        page.locator("#year-trigger").click()
+        page.locator('#year-options [data-value="2026"]').click()
+        page.locator(".language-toggle").click()
+        assert page.locator("#stories-heading").inner_text() == "就業經歷"
+        assert page.locator("#year-filter").input_value() == "2026"
+        assert "category=career" in page.url and "lang=zh" in page.url
+        page.goto(base + PREFIX + "/community.html", wait_until="networkidle")
+        assert page.locator("html").get_attribute("lang") == "zh-Hant"
+        assert page.locator(".community-person").count() == 1
+        assert "傅謝懿" in page.locator(".community-person").inner_text()
+        page.goto(base + PREFIX + "/community.html?lang=en", wait_until="networkidle")
+        assert page.locator("html").get_attribute("lang") == "en"
+        assert "Fu Xieyi" in page.locator(".community-person").inner_text()
+        page.goto(base + PREFIX + "/" + articles[0]["url"], wait_until="networkidle")
+        original = page.locator(".article-body").inner_html()
+        original_title = page.locator(".article-page > h1").inner_text()
+        page.locator(".language-toggle").click()
+        assert page.locator(".article-body").inner_html() == original
+        assert page.locator(".article-page > h1").inner_text() == original_title
+        page.goto(base + PREFIX + "/submit.html?lang=en", wait_until="networkidle")
+        page.wait_for_selector("#author")
+        values = {"author":"Alex / 傅", "year":"2026", "college":"Engineering / 工学院",
+                  "major":"Computer Science / 计算机", "destination":"Research / 科研",
+                  "program":"MSc / 硕士", "body":"## My journey / 我的经历\n\nChinese and English / 中英文自由投稿。", "contact":"alex@example.com"}
+        for name, value in values.items():
+            page.locator("#" + name).fill(value)
+        assert page.locator("label[for=author]").inner_text() == "Name / nickname *"
+        page.locator("#preview-button").click()
+        assert page.locator("#preview").is_visible()
+        preview_body = page.locator("#preview-text .article-body").inner_html()
+        page.locator(".language-toggle").click()
+        assert page.locator("label[for=author]").inner_text() == "姓名 / 暱稱 *"
+        assert page.locator("#preview").is_visible()
+        assert page.locator("#preview-text .article-body").inner_html() == preview_body
+        for name, value in values.items():
+            assert page.locator("#" + name).input_value() == value
+        page.reload(wait_until="networkidle")
+        page.wait_for_selector("#author")
+        assert page.locator("#author").input_value() == values["author"]
+        assert page.locator("#body").input_value() == values["body"]
+        assert page.locator("#contact").input_value() == ""
+        assert errors == [], errors
+        assert page.locator("body").evaluate("el => el.scrollWidth <= innerWidth")
+        print(f"HKUST bilingual flow passed: {engine.name}, {width}px")
+        context.close()
+        browser.close()
 
 if __name__ == "__main__":
     main()

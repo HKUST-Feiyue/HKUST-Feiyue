@@ -19,13 +19,13 @@ PEM = KEY.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.
 
 
 def fixture():
-    record = {"version": 1, "category": "career", "author": "张同学", "year": "2026", "college": "某学院", "major": "某专业",
-              "destination": "某企业", "program": "产品经理", "body": "## 我的经历\n\n具体经历。",
+    record = {"version": 1, "category": "career", "author": "张同学 / Alex", "year": "2026", "college": "某学院", "major": "某专业",
+              "destination": "某企业", "program": "产品经理", "body": "## 我的经历 / My journey\n\n具体经历。Lessons learned.",
               "contact": ""}
     payload = base64.urlsafe_b64encode(json.dumps(record, ensure_ascii=False).encode()).decode().rstrip("=")
     signature = KEY.sign(module.SIGNING_CONTEXT + payload.encode(), padding.PKCS1v15(), hashes.SHA256())
     signed = base64.urlsafe_b64encode(signature).decode().rstrip("=")
-    issue = {"number": 57, "title": "[飞跃手册投稿] [就业] 张同学 — 某企业 · 产品经理",
+    issue = {"number": 57, "title": "[飞跃手册投稿] [就业] 张同学 / Alex — 某企业 · 产品经理",
              "state_reason": "completed", "labels": [{"name": "submission:pending"}],
              "body": "### 经历\n\n<!-- hkust-submission-v2:" + payload + ":" + signed + " -->"}
     return {"action": "closed", "sender": {"login": "FuTseYi"},
@@ -50,6 +50,7 @@ class PublicationTests(unittest.TestCase):
             self.assertIn("college: 某学院", path.read_text(encoding="utf-8"))
             self.assertIn("major: 某专业", path.read_text(encoding="utf-8"))
             self.assertIn("## 我的经历", path.read_text(encoding="utf-8"))
+            self.assertIn("## 我的经历 / My journey", path.read_text(encoding="utf-8"))
             self.assertFalse(module.import_event(event, Path(directory), PEM)[1])
 
     def test_only_completed_signed_closure(self):

@@ -10,10 +10,10 @@ const signingKey = await webcrypto.subtle.importKey('pkcs8', privateKey.export({
 const appEnv = { GITHUB_APP_ID: '5666636', GITHUB_APP_INSTALLATION_ID: '1234', GITHUB_APP_PRIVATE_KEY: privatePem };
 
 const valid = {
-  version: 1, category: 'career', author: '张同学', year: '2026',
-  college: '某学院', major: '软件工程',
+  version: 1, category: 'career', author: '张同学 / Alex', year: '2026',
+  college: 'School of Engineering / 工学院', major: '软件工程',
   destination: '某科技公司', program: '软件工程师',
-  body: '我准备了项目经历和面试。', contact: '', turnstileToken: 'sample-token'
+  body: 'My preparation / 我的准备：项目经历和面试。', contact: '', turnstileToken: 'sample-token'
 };
 const request = (body = valid, origin = 'https://hkust-feiyue.github.io') =>
   new Request('https://worker.example/submit', {

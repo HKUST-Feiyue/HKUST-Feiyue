@@ -57,7 +57,7 @@ def social_values(page, identity, url, article):
         "og:site_name": identity.title.split(" · ")[0],
         "og:title": page.title, "og:description": page.meta["description"],
         "og:url": url, "og:type": "article" if article else "website",
-        "og:locale": "zh_CN", "og:image": image,
+        "og:locale": "en_US", "og:image": image,
         "og:image:alt": identity.meta["og:image:alt"],
         "twitter:card": "summary_large_image", "twitter:title": page.title,
         "twitter:description": page.meta["description"],
