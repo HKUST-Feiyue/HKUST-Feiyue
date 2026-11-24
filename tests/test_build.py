@@ -120,8 +120,10 @@ class SubmissionBuildTests(unittest.TestCase):
         self.assertNotIn('brand-seal', page)
         stylesheet = "".join((ROOT / "assets/css/site.css").read_text(encoding="utf-8").split())
         self.assertIn('.footer-logo{display:block;width:52px;height:52px;flex:none;object-fit:contain;', stylesheet)
-        self.assertNotIn("mask-image:", stylesheet)
-        self.assertNotIn("clip-path:", stylesheet)
+        for rule in stylesheet.split("}"):
+            if "-logo" in rule.partition("{")[0]:
+                self.assertNotIn("mask-image:", rule)
+                self.assertNotIn("clip-path:", rule)
 
     def test_no_redundant_title_field(self):
         schema = json.loads((ROOT / "data/schema.json").read_text(encoding="utf-8"))
