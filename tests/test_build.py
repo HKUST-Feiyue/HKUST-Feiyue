@@ -208,7 +208,7 @@ class SubmissionBuildTests(unittest.TestCase):
 
     def test_demo_is_not_represented_as_real_story(self):
         sample = (ROOT / "data/demo-submission.md").read_text(encoding="utf-8")
-        self.assertIn("不是真实投稿", sample)
+        self.assertIn("不是真實投稿", sample)
 
 
 if __name__ == "__main__":
