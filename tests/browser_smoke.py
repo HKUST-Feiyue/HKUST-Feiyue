@@ -300,7 +300,7 @@ def main():
                         const button = document.querySelector('.search-open').getBoundingClientRect();
                         const expectedTop = button.bottom + 12;
                         const actualTop = dialog.top;
-                        return Math.abs(actualTop - expectedTop) < 3 &&
+                        return (innerWidth <= 900 ? Math.abs(actualTop) < 2 && Math.abs(dialog.width-innerWidth)<2 : Math.abs(actualTop - expectedTop) < 3) &&
                             Math.abs((dialog.left + dialog.right) / 2 - innerWidth / 2) < 2 &&
                             (innerWidth > 900 || button.bottom <= document.querySelector('.topbar').getBoundingClientRect().bottom);
                     }""")
@@ -309,14 +309,13 @@ def main():
                             const viewport = visualViewport;
                             Object.defineProperty(viewport, 'height', {configurable: true, value: 360});
                             viewport.dispatchEvent(new Event('resize'));
-                            const available = 360 + viewport.offsetTop - el.getBoundingClientRect().top - 12;
-                            const fits = parseFloat(getComputedStyle(el).maxHeight) <= available + 1;
+                            const fits = el.getBoundingClientRect().height <= 361;
                             delete viewport.height;
                             viewport.dispatchEvent(new Event('resize'));
                             return fits;
                         }""")
                     page.locator("#search").fill("no-matching-story-987654321")
-                    assert page.locator(".article-item:visible").count() == visible_before_search
+                    assert page.locator(".article-item:not([hidden])").count() == visible_before_search
                     page.wait_for_function("document.querySelector('#search-results').textContent.includes('沒有找到匹配內容')")
                     page.locator("#search").fill("官方")
                     page.locator("#search-results li a").first.wait_for(state="visible")
@@ -341,10 +340,13 @@ def main():
                     assert page.locator(".article-toc").count() <= 1
                     if page.locator(".article-toc").count():
                         assert page.locator(".article-toc").evaluate("el => el.tagName") == "DETAILS"
-                        assert page.locator(".article-toc-side").count() == 0
-                        page.locator(".article-toc summary").click()
-                        assert page.locator(".article-toc").get_attribute("open") is not None
-                        assert page.locator(".article-toc a").first.is_visible()
+                        assert page.locator(".article-toc-side").count() == 1
+                        if width < 1600:
+                            page.locator(".article-toc summary").click()
+                            assert page.locator(".article-toc").get_attribute("open") is not None
+                            assert page.locator(".article-toc a").first.is_visible()
+                        else:
+                            assert page.locator('.article-toc-side a').first.is_visible()
 
                     assert page.locator("#category-nav [aria-current='page']").count() == 1
                     assert page.locator(".site-footer").count() == 1

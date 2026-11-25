@@ -5,6 +5,7 @@ def check_reading(playwright, base, articles):
         for width,theme in ((320,'light'),(390,'dark'),(1440,'light')):
             context=browser.new_context(viewport={'width':width,'height':900},reduced_motion='reduce')
             context.add_init_script(f"localStorage.setItem('hkust-theme','{theme}')")
+            context.route('**/assets/js/submission-config.js*',lambda route:route.fulfill(content_type='application/javascript',body='window.HKUST_SUBMISSION_CONFIG={enabled:false};'))
             page=context.new_page()
             for lang,name in (('zh','傅謝懿(Shine)'),('en','FuTseYi(Shine)')):
                 page.goto(base+'/community.html?lang='+lang,wait_until='networkidle')
@@ -33,6 +34,18 @@ def check_reading(playwright, base, articles):
                 }""")
                 assert page.locator('.article-page').evaluate('el=>el.getBoundingClientRect().width<=761')
                 assert page.locator('body').evaluate('el=>el.scrollWidth<=innerWidth')
+                for route in ('/community.html', '/submit.html', '/'+articles[0]['url']):
+                    page.goto(base+route+'?lang='+lang,wait_until='networkidle')
+                    page.locator('.search-open').click()
+                    assert page.locator('.search-field').evaluate('el=>el.getBoundingClientRect().height<=47')
+                    assert page.locator('#search').evaluate('el=>document.activeElement===el')
+                    if width>900:
+                        assert page.locator('#search-dialog').evaluate('el=>el.getBoundingClientRect().height<=47')
+                    page.locator('#search').fill(articles[0]['author'])
+                    page.locator('#search-results li a').first.wait_for(state='visible')
+                    page.keyboard.press('Escape')
+                    assert page.locator('.search-open').evaluate('el=>document.activeElement===el')
+                    assert page.locator('#search').input_value()==''
             context.close()
             print(f'Handbook reading passed: {engine.name}, {width}px, {theme}')
         browser.close()

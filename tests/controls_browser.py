@@ -18,6 +18,12 @@ def check_controls(playwright, base):
             assert page.locator('.language-toggle [lang]').count() == 2
             assert page.locator('.language-toggle [lang="zh-CN"]').count() == 0
             assert page.locator('.contact-fields > button').evaluate('el=>el.getBoundingClientRect().width<el.parentElement.getBoundingClientRect().width-20')
+            assert page.locator('.contact-row > button:visible').count()==0
+            page.locator('.contact-fields > button').click()
+            assert page.locator('.contact-row > button:visible').count()==2
+            page.locator('.contact-row > button').last.click()
+            assert page.locator('.contact-row').count()==1
+            assert page.locator('.contact-row > button:visible').count()==0
             assert page.locator('#preview-button').evaluate('el=>el.getBoundingClientRect().height<=38 && getComputedStyle(el).width!=="100%"')
             page.locator('#author').fill('简体 / 繁體 / 日本語 / العربية / 🙂')
             page.locator('#year').fill('2024')

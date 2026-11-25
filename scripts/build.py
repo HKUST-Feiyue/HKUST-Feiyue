@@ -95,6 +95,12 @@ def shared_chrome(source, page, prefix="./", category=None):
     links.append(f'<a href="{prefix}community.html" class="nav-community"' + (' aria-current="page"' if page == "community" else '') + '>共建与联系 <span class="link-arrow" aria-hidden="true"></span></a>')
     sidebar = re.sub(r'(<nav class="nav"[^>]*>).*?(</nav>)', lambda m: m[1] + ''.join(links) + m[2], sidebar, flags=re.S)
     header = re.search(r'<header class="topbar"[^>]*>.*?</header>', home, re.S)[0]
+    if page != "index":
+        search_button = re.search(r'<button[^>]*class="search-open".*?</button>', home, re.S)[0].replace(' hidden', '')
+        header = header.replace('</header>', search_button + '</header>')
+        dialog = re.search(r'<dialog class="search-dialog".*?</dialog>', home, re.S)[0]
+        if 'id="search-dialog"' not in source:
+            source = source.replace('</body>', dialog + '</body>')
     footer = re.search(r'<footer class="site-footer".*?</footer>', home, re.S)[0]
     footer_links = f'<a href="{prefix}?view=all">全部经历</a>' + ''.join(
         f'<a href="{prefix}?category={quote(item["id"])}">{html.escape(item["label"])}</a>' for item in SCHEMA["categories"])
