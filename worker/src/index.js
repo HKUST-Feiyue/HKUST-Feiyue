@@ -138,7 +138,7 @@ async function issueFor(record, key) {
   const title = '[飞跃手册投稿] [' + category.label + '] ' +
     [...(record.author + ' · ' + record.destination).replace(/\s+/g, ' ')].slice(0, 95).join('');
   const lines = schema.fields.filter(field => field.name !== 'body' && field.name !== 'contact')
-    .map(field => '**' + field.label + '：** ' + quote(record[field.name]));
+    .map(field => '**' + field.label + '：** ' + quote(field.name === 'term' ? field.options.find(option => option.value === record.term).label : record[field.name]));
   lines.push('', '### 经历正文', quote(record.body), '', '### 联系方式',
     record.contact.length ? record.contact.map(row => quote(row.type + '：' + row.value)).join('\n') : '> 未填写',
     '', '---', '', '**已分配至：** @HKUST-Feiyue/' + category.reviewTeam);

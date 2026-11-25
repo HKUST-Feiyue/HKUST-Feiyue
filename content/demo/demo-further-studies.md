@@ -2,6 +2,7 @@
 author: 演示作者 1
 campus: hk
 year: '2020'
+term: fall
 degree: BSc
 field: Computer Science
 category: further-studies

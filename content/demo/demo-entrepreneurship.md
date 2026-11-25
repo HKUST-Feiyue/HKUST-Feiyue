@@ -2,6 +2,7 @@
 author: 演示作者 5
 campus: hk
 year: '2024'
+term: fall
 degree: MBA
 field: Business
 category: entrepreneurship

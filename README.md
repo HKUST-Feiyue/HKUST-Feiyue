@@ -26,7 +26,7 @@ HKUST-Feiyue/
 ├── .github/workflows/  # PR 验证、审核入库和跨仓库发布
 ├── assets/             # 样式、脚本和图片
 ├── content/            # 文章与社区投稿 Markdown
-├── data/schema.json    # 投稿分类和字段的唯一规则
+├── data/schema.json    # 投稿分类和字段的唯一规则（含必选 Fall / Spring 入学季）
 ├── scripts/            # 静态构建、索引和审核入库
 ├── tests/              # 单元、Worker 和浏览器回归测试
 ├── worker/             # Cloudflare 投稿接口
@@ -115,4 +115,4 @@ sequenceDiagram
 
 ## 复用与素材来源
 
-本站从 [UEM 飞跃手册](https://github.com/UEM-Feiyue/UEM-Feiyue) 保留完整提交历史迁移，沿用静态架构与发布机制，业务字段统一为九项和五大分享方向。横版标识及 favicon 由维护者提供；校园横幅来自 [HKUST Visit](https://hkust.edu.hk/visit)。演示内容用于展示功能，不代表港科大学生的真实经历。
+本站从 [UEM 飞跃手册](https://github.com/UEM-Feiyue/UEM-Feiyue) 保留完整提交历史迁移，沿用静态架构与发布机制，业务字段统一为十项和五大分享方向。横版标识及 favicon 由维护者提供；校园横幅来自 [HKUST Visit](https://hkust.edu.hk/visit)。演示内容用于展示功能，不代表港科大学生的真实经历。

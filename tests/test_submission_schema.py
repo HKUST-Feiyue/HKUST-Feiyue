@@ -1,4 +1,4 @@
-"""Nine-field contract, safe contacts and actual JS→Python signed publication."""
+"""Ten-field contract, safe contacts and actual JS→Python signed publication."""
 import copy
 import json
 from pathlib import Path
@@ -11,7 +11,7 @@ from scripts.build import parse, render, display_title, excerpt
 ROOT = Path(__file__).resolve().parents[1]
 
 def record():
-    return dict(version=1, author="Alex <script>", campus="gz", year="2024", degree="MPhil", field="AI & Robotics", category="research", destination="Example Lab", body="## Preparation\n\nActual Markdown **experience**.\n\n## Advice\n\nUseful advice.", contact=[dict(type="Email",value="contact-unique@example.com")])
+    return dict(version=1, author="Alex <script>", campus="gz", year="2024", term="fall", degree="MPhil", field="AI & Robotics", category="research", destination="Example Lab", body="## Preparation\n\nActual Markdown **experience**.\n\n## Advice\n\nUseful advice.", contact=[dict(type="Email",value="contact-unique@example.com")])
 
 class ContractTests(unittest.TestCase):
     def test_contact_rows_normalize_without_losing_order(self):
@@ -49,9 +49,11 @@ class ContractTests(unittest.TestCase):
                 self.assertTrue(created)
                 meta,body=parse(target)
                 self.assertEqual(meta["year"],"2024")
+                self.assertEqual(meta["term"],"fall")
                 self.assertEqual(meta["published_at"],issue["closed_at"])
                 self.assertEqual(meta["contact"],value["contact"])
                 page=render(meta,body,"articles/issue-57.html")
+                self.assertIn('2024 Fall',page)
                 self.assertIn('class="article-contact" data-pagefind-ignore',page)
                 self.assertIn('data-copy="contact-unique@example.com"',page)
                 self.assertIn('Alex &lt;script&gt; · Example Lab',page)

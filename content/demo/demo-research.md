@@ -2,6 +2,7 @@
 author: 演示作者 2
 campus: gz
 year: '2021'
+term: fall
 degree: MPhil
 field: Artificial Intelligence
 category: research

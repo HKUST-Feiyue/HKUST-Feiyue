@@ -58,6 +58,12 @@ def excerpt(body):
     return re.sub(r"\s+", " ", " ".join(parser.parts)).strip()[:150]
 
 
+def entry_period(meta):
+    field = next(field for field in SCHEMA["fields"] if field["name"] == "term")
+    label = next(option["label"] for option in field["options"] if option["value"] == meta["term"])
+    return meta["year"] + " " + label
+
+
 def display_title(meta):
     """One title convention shared by archive cards and article pages."""
     return str(meta["author"]).strip() + " · " + str(meta["destination"]).strip()
@@ -109,7 +115,7 @@ def shared_chrome(source, page, prefix="./", category=None):
 
 def render(meta, body, url):
     clean = render_markdown(body)
-    byline = " · ".join([ui(next(x["label"] for x in next(field for field in SCHEMA["fields"] if field["name"] == "campus")["options"] if x["value"] == meta["campus"])), original(meta["year"]), original(meta["degree"])])
+    byline = " · ".join([ui(next(x["label"] for x in next(field for field in SCHEMA["fields"] if field["name"] == "campus")["options"] if x["value"] == meta["campus"])), original(entry_period(meta)), original(meta["degree"])])
     headings = re.findall(r'<h([23]) id="([^"]+)">(.+?)</h[23]>', clean)
     toc = '<details class="article-toc"><summary>本页目录</summary><div class="article-toc-panel"><div class="article-toc-clip"><ul>' + ''.join(f'<li class="toc-depth-{level}"><a data-i18n-ignore href="#{html.escape(anchor, quote=True)}">{text}</a></li>' for level, anchor, text in headings) + '</ul></div></div></details>' if len(headings) >= 2 else ''
     demo = '<span class="demo-badge">演示</span>' if meta.get('demo') is True else ''
@@ -133,9 +139,9 @@ def render_home(entries):
     for entry in entries:
         badge = '<span class="demo-badge">演示</span>' if entry["demo"] else ''
         esc = lambda value: html.escape(str(value), quote=True)
-        label = ' · '.join([ui(next(x["label"] for x in next(field for field in SCHEMA["fields"] if field["name"] == "campus")["options"] if x["value"] == entry["campus"])), original(entry["year"]), original(entry["degree"])])
-        cards.append(f'<article class="article-item" data-category="{esc(entry["category"])}" data-campus="{esc(entry["campus"])}" data-degree="{esc(entry["degree"])}" data-year="{esc(entry["year"])}" data-demo="{str(entry["demo"]).lower()}">{badge}<h3 data-i18n-ignore><a href="./{esc(entry["url"])}">{esc(entry["title"])}</a></h3><p class="article-meta">{label}</p><p class="article-field" data-i18n-ignore>{esc(entry["field"])}</p><p data-i18n-ignore>{esc(entry["excerpt"])}</p><time datetime="{esc(entry["published_at"])}">{esc(entry["published_at"][:10])}</time><a class="article-more" href="./{esc(entry["url"])}">阅读全文<span class="link-arrow"></span></a></article>')
-    source = re.sub(r'(<div id="articles"[^>]*>).*?(</div>)', lambda m: m[1] + ''.join(cards) + m[2], source, count=1, flags=re.S)
+        label = ' · '.join([ui(next(x["label"] for x in next(field for field in SCHEMA["fields"] if field["name"] == "campus")["options"] if x["value"] == entry["campus"])), original(entry_period(entry)), original(entry["degree"])])
+        cards.append(f'<article class="article-item" data-category="{esc(entry["category"])}" data-campus="{esc(entry["campus"])}" data-degree="{esc(entry["degree"])}" data-year="{esc(entry["year"])}" data-demo="{str(entry["demo"]).lower()}">{badge}<h3 data-i18n-ignore><a href="./{esc(entry["url"])}">{esc(entry["title"])}</a></h3><p class="article-meta">{label}</p><p class="article-field" data-i18n-ignore>{esc(entry["field"])}</p><p class="article-excerpt" data-i18n-ignore>{esc(entry["excerpt"])}</p><div class="article-item-footer"><time datetime="{esc(entry["published_at"])}">{esc(entry["published_at"][:10])}</time><a class="article-more" href="./{esc(entry["url"])}">阅读全文<span class="link-arrow"></span></a></div></article>')
+    source = re.sub(r'(<div id="articles"[^>]*>).*?(</div>\s*<div id="empty-state")', lambda m: m[1] + ''.join(cards) + m[2], source, count=1, flags=re.S)
     years = ''.join(f'<option value="{html.escape(year, quote=True)}">{html.escape(year)}</option>' for year in sorted({entry["year"] for entry in entries}, reverse=True))
     source = re.sub(r'(<select\b[^>]*\bid="year-filter"[^>]*>).*?(</select>)', lambda m: m[1] + '<option value="all">全部年份</option>' + years + m[2], source, count=1, flags=re.S)
     for name, default in (("campus", "全部校区"), ("degree", "全部学位")):
@@ -170,7 +176,7 @@ def main():
             "category": meta["category"],
             "author": str(meta["author"]),
             "year": str(meta["year"]),
-            **{key: meta[key] for key in ("campus", "degree", "field", "published_at")},
+            **{key: meta[key] for key in ("campus", "term", "degree", "field", "published_at")},
             "destination": str(meta.get("destination", "")),
             "excerpt": excerpt(body),
             "url": url,

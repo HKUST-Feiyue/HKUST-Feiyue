@@ -29,6 +29,16 @@ def check_controls(playwright, base):
             assert page.locator('#campus-trigger').count() == 0
             page.locator('[name="campus"][value="gz"]').check()
             assert page.locator('#campus').input_value() == 'gz'
+            assert page.locator('#term').input_value() == ''
+            page.locator('#preview-button').click()
+            assert page.locator('#preview').is_hidden()
+            assert page.locator('#term-trigger').get_attribute('aria-invalid') == 'true'
+            page.locator('#term-trigger').click()
+            assert page.locator('#term-options [role=option]').all_text_contents() == ['Fall', 'Spring']
+            if width < 500:
+                page.locator('#term-options [data-value=spring]').tap()
+            else:
+                page.locator('#term-options [data-value=spring]').click()
             page.locator('#degree-trigger').click()
             page.wait_for_function("document.querySelector('#degree-trigger').getAttribute('aria-expanded')==='true'")
             assert page.locator('#degree-options .select-group').count() == 4
@@ -64,9 +74,11 @@ def check_controls(playwright, base):
             assert page.locator('#preview').is_visible(), page.evaluate("[...document.querySelectorAll('select')].map(el=>[el.id,el.value,el.validationMessage])")
             before = page.locator('#preview-text').inner_text()
             assert 'العربية 🙂' in before and '简体' in before
+            assert '2024 Spring' in page.locator('#preview-text .article-byline').inner_text()
             page.locator('.language-toggle').click()
             assert page.locator('html').get_attribute('lang') == 'en'
             assert page.locator('#degree-label').inner_text() == 'MPhil'
+            assert page.locator('#term-label').inner_text() == 'Spring'
             assert page.locator('#field').input_value().endswith('🧪')
             page.locator('#degree-trigger').click()
             assert page.locator('#degree-options .select-group').first.inner_text() == 'Undergraduate'
@@ -74,6 +86,7 @@ def check_controls(playwright, base):
             page.reload(wait_until='networkidle')
             page.wait_for_selector('#degree-trigger')
             assert page.locator('#degree-label').inner_text() == 'MPhil'
+            assert page.locator('#term-label').inner_text() == 'Spring'
             assert 'العربية' in page.locator('#author').input_value()
             page.locator('button[type=reset]').click()
             page.wait_for_function("document.querySelector('#degree-label').textContent==='Select degree'")

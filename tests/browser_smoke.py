@@ -79,7 +79,7 @@ def main():
                     page.goto(base + PREFIX + "/", wait_until="networkidle")
                     assert page.locator("h1:visible").count() == 1
                     first_meta = page.locator(".article-item .article-meta").first.inner_text()
-                    assert first_meta.endswith(articles[0]["year"] + " · " + articles[0]["degree"])
+                    assert first_meta.endswith(articles[0]["year"] + " " + articles[0]["term"].title() + " · " + articles[0]["degree"])
                     assert page.locator(".article-item h3").first.inner_text().startswith(articles[0]["author"] + " · ")
                     assert page.locator(".article-item").first.evaluate("el => el.querySelector('h3').compareDocumentPosition(el.querySelector('.article-meta')) & Node.DOCUMENT_POSITION_FOLLOWING")
                     # A bounded image banner retains aspect ratio at desktop/mobile sizes.
@@ -264,7 +264,7 @@ def main():
                         page.wait_for_url(lambda url: parse_qs(urlsplit(url).query).get("view") == ["all"])
                     assert page.locator(".year-select svg").is_visible()
                     assert page.locator("#year-trigger").is_visible()
-                    assert page.locator("#year-trigger").evaluate("el => el.getBoundingClientRect().width < 160")
+                    assert page.locator("#year-trigger").evaluate("el => el.getBoundingClientRect().width <= document.querySelector('.attribute-filters').getBoundingClientRect().width + 1")
                     page.locator("#year-trigger").click()
                     assert page.locator("#year-options").evaluate("el => el.matches(':popover-open')")
                     assert page.locator("#year-options .select-option").count() >= 2
@@ -335,8 +335,7 @@ def main():
                             const box = main.getBoundingClientRect();
                             const content = article.getBoundingClientRect();
                             const style = getComputedStyle(main);
-                            return Math.abs(content.left - box.left - parseFloat(style.paddingLeft)) < 2 &&
-                                Math.abs(content.right - box.right + parseFloat(style.paddingRight)) < 2;
+                            return content.width <= 761 && Math.abs((content.left + content.right) - (box.left + box.right)) < 2;
                         }""")
                     assert page.locator(".demo-badge").is_visible() == opened_article["demo"]
                     assert page.locator(".article-toc").count() <= 1
@@ -377,6 +376,7 @@ def main():
                     page.locator("#year").fill("abcd")
                     assert not page.locator("#year").evaluate("el => el.checkValidity()")
                     page.locator("#year").fill("2026")
+                    page.locator("#term").select_option("fall")
                     page.locator('[name="campus"][value="hk"]').check()
                     page.locator("#degree").select_option("BSc")
                     page.locator("#category").select_option("career")
@@ -527,6 +527,7 @@ def main():
             page.locator("#category").select_option("further-studies")
             page.locator("#author").fill("演示作者 1")
             page.locator("#year").fill("2020")
+            page.locator("#term").select_option("fall")
             page.locator('[name="campus"][value="hk"]').check()
             page.locator("#degree").select_option("BSc")
             page.locator("#field").fill("Computer Science")
@@ -607,6 +608,7 @@ def main():
             page.locator("#category").select_option("career")
             page.locator("#author").fill("測試同學")
             page.locator("#year").fill("2026")
+            page.locator("#term").select_option("fall")
             page.locator('[name="campus"][value="gz"]').check()
             page.locator("#degree").select_option("MPhil")
             page.locator("#field").fill("某專業")
@@ -679,6 +681,8 @@ def main():
             check_controls(playwright, base)
             from locale_browser import check_locale
             check_locale(playwright, base, articles)
+            from reading_browser import check_reading
+            check_reading(playwright, base, articles)
     finally:
         server.shutdown()
         worker.join()
@@ -704,7 +708,7 @@ def check_languages(playwright, base, articles):
             for name, value in {"author":"Alex / 傅", "year":"2024", "field":"Computing / 计算机", "destination":"Test / 测试", "body":"## Journey\n\n**Experience**"}.items():
                 page.locator('#' + name).fill(value)
             page.locator('[name="campus"][value="gz"]').check()
-            for name,value in {"degree":"MPhil","category":"research"}.items():
+            for name,value in {"term":"fall","degree":"MPhil","category":"research"}.items():
                 page.locator('#' + name).select_option(value)
             page.locator('[data-contact="type"]').fill('Email')
             page.locator('#preview-button').click()

@@ -10,7 +10,7 @@ const signingKey = await webcrypto.subtle.importKey('pkcs8', privateKey.export({
 const appEnv = { GITHUB_APP_ID: '5666636', GITHUB_APP_INSTALLATION_ID: '1234', GITHUB_APP_PRIVATE_KEY: privatePem };
 
 const valid = {
-  version: 1, category: 'career', author: '张同学 / Alex', year: '2026',
+  version: 1, category: 'career', author: '张同学 / Alex', year: '2026', term: 'fall',
   campus: 'hk', degree: 'BEng', field: '软件工程',
   destination: '某科技公司',
   body: 'My preparation / 我的准备：项目经历和面试。', contact: [], turnstileToken: 'sample-token'
@@ -130,3 +130,13 @@ test('rejects verification for another origin or action', async () => {
  test('rejects invalid enum values and retired metadata', () => {
    for (const change of [{campus:'other'},{degree:'Bachelor'},{year:2024},{field:''},{college:'legacy'}]) assert.equal(validate({...valid,...change}),null);
  });
+
+test('requires an explicit Fall or Spring intake', async () => {
+  for (const term of ['', undefined, 'summer', 'Fall']) assert.equal(validate({...valid,term}),null);
+  for (const term of ['fall','spring']) {
+    const record=validate({...valid,term});
+    assert.equal(record.term,term);
+    const issue=await issueFor(record,signingKey);
+    assert.ok(issue.body.includes(term === 'fall' ? 'Fall' : 'Spring'));
+  }
+});
