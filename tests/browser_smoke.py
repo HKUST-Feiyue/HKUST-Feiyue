@@ -668,7 +668,8 @@ def main():
             page.wait_for_function("""() => {
                 const link = [...document.querySelectorAll('.article-toc a')].at(-1);
                 const target = document.getElementById(decodeURIComponent(link.hash.slice(1)));
-                const top = Math.min(target.getBoundingClientRect().top + scrollY - 24, document.documentElement.scrollHeight - innerHeight);
+                const offset = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop);
+                const top = Math.min(target.getBoundingClientRect().top + scrollY - offset, document.documentElement.scrollHeight - innerHeight);
                 return Math.abs(scrollY - top) < 4;
             }""")
             context.close()
