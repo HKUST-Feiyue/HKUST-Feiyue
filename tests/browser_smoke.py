@@ -2,7 +2,7 @@
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit, parse_qs
 from pathlib import Path
 import sys
 from threading import Thread
@@ -183,7 +183,7 @@ def main():
                         assert abs(divider_positions[0] - divider_positions[1]) <= 2, (width, divider_positions)
                     page.locator(brand).click()
                     page.wait_for_function("scrollY <= 2")
-                    assert page.url.rstrip("/").endswith(PREFIX)
+                    assert urlsplit(page.url).path.rstrip("/").endswith(PREFIX)
                     assert page.locator("#category-nav [data-category]").count() == 5
                     assert page.locator(".site-footer").count() == 1
                     assert page.locator(".site-footer").evaluate(
@@ -255,13 +255,13 @@ def main():
                         if width <= 900:
                             page.locator("#menu-toggle").click()
                         page.locator("#category-nav [data-category='kaoyan']").click()
-                        page.wait_for_url("**/?category=kaoyan")
+                        page.wait_for_url(lambda url: parse_qs(urlsplit(url).query).get("category") == ["kaoyan"])
                         page.wait_for_function("scrollY === 0")
                         assert page.locator(".article-item:visible").count() == sum(item["category"] == "kaoyan" for item in articles)
                         if width <= 900:
                             page.locator("#menu-toggle").click()
                         page.locator("#category-nav [data-category='all']").click()
-                        page.wait_for_url("**/?view=all")
+                        page.wait_for_url(lambda url: parse_qs(urlsplit(url).query).get("view") == ["all"])
                     assert page.locator("#year-filter").evaluate("el => getComputedStyle(el).appearance") == "none"
                     assert page.locator(".year-select svg").is_visible()
                     assert page.locator("#year-trigger").is_visible()
@@ -360,7 +360,7 @@ def main():
                         page.locator("#menu-toggle").click()
                         assert page.locator("#menu-toggle").get_attribute("aria-expanded") == "true"
                         page.locator("#category-nav a.nav-contribute").click()
-                        page.wait_for_url("**/submit.html")
+                        page.wait_for_url(lambda url: urlsplit(url).path.endswith("/submit.html"))
                         assert page.locator(".topbar").is_visible()
                         assert page.locator(".campus-banner").is_visible()
                         assert page.locator("#menu-toggle").get_attribute("aria-expanded") == "false"
@@ -443,7 +443,7 @@ def main():
                 page.goto(base + "/articles/demo-postgraduate.html", wait_until="networkidle")
                 Handler.script_delay = 2
                 page.locator('.article-back').click(no_wait_after=True)
-                page.wait_for_url('**/?category=kaoyan', wait_until='commit')
+                page.wait_for_url(lambda url: parse_qs(urlsplit(url).query).get("category") == ["kaoyan"], wait_until="commit")
                 page.wait_for_selector('#archive-intro')
                 assert page.locator('#category-nav [aria-current="page"]').get_attribute('data-category') == 'kaoyan'
                 assert page.locator('#home-intro').is_hidden()
@@ -464,12 +464,12 @@ def main():
             page.locator('#search-dialog').wait_for(state="hidden")
             page.wait_for_function("document.querySelector('#search').value === ''")
             page.locator('#category-nav [data-category="all"]').click()
-            page.wait_for_function("location.search === '?view=all'")
+            page.wait_for_function("new URLSearchParams(location.search).get('view') === 'all'")
             page.go_back()
-            assert page.url.endswith('?category=career')
+            assert parse_qs(urlsplit(page.url).query)['category'] == ['career']
             assert page.locator('.article-item:visible').count() == 1
             page.go_forward()
-            assert page.url.endswith('?view=all')
+            assert parse_qs(urlsplit(page.url).query)['view'] == ['all']
             page.goto(base + '/?category=kaoyan', wait_until='networkidle')
             page.locator('.search-open').click()
             page.locator('#search').fill("周同學")
@@ -715,16 +715,35 @@ def check_languages(playwright, base, articles):
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.goto(base + PREFIX + "/", wait_until="networkidle")
         assert page.locator("html").get_attribute("lang") == "en"
+        assert parse_qs(urlsplit(page.url).query)["lang"] == ["en"]
         assert page.locator(".language-toggle").count() == 1
         assert page.locator(".language-toggle").is_visible()
+        language_button = page.locator(".language-toggle")
+        assert " ".join(language_button.inner_text().split()) == "繁體 / EN"
+        button_box = language_button.bounding_box()
+        language_button.click()
+        assert page.locator("html").get_attribute("lang") == "zh-Hant"
+        assert language_button.bounding_box() == button_box
+        assert page.locator("#hero-title").evaluate("el => getComputedStyle(el).transform") == "none"
+        language_button.click()
         assert page.locator("#category-nav [data-category='career']").text_content() == "Careers"
         page.goto(base + PREFIX + "/?category=career", wait_until="networkidle")
+        if width <= 900:
+            assert page.evaluate("""() => {
+                const boxes = ['.mobile-brand img', '.language-toggle', '.search-open', '#menu-toggle']
+                    .map(selector => document.querySelector(selector).getBoundingClientRect());
+                return boxes.every((box, i) => i === 0 || box.left >= boxes[i - 1].right) &&
+                    boxes[2].left - boxes[1].right <= 5 && boxes[3].left - boxes[2].right <= 5;
+            }""")
         page.locator("#year-trigger").click()
         page.locator('#year-options [data-value="2026"]').click()
         page.locator(".language-toggle").click()
         assert page.locator("#stories-heading").inner_text() == "就業經歷"
         assert page.locator("#year-filter").input_value() == "2026"
         assert "category=career" in page.url and "lang=zh" in page.url
+        page.goto(base + PREFIX + "/?view=all#stories-heading", wait_until="networkidle")
+        assert parse_qs(urlsplit(page.url).query) == {"view": ["all"], "lang": ["zh"]}
+        assert urlsplit(page.url).fragment == "stories-heading"
         page.goto(base + PREFIX + "/community.html", wait_until="networkidle")
         assert page.locator("html").get_attribute("lang") == "zh-Hant"
         assert page.locator(".community-person").count() == 1
