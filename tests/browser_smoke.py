@@ -262,13 +262,12 @@ def main():
                             page.locator("#menu-toggle").click()
                         page.locator("#category-nav [data-category='all']").click()
                         page.wait_for_url(lambda url: parse_qs(urlsplit(url).query).get("view") == ["all"])
-                    assert page.locator("#year-filter").evaluate("el => getComputedStyle(el).appearance") == "none"
                     assert page.locator(".year-select svg").is_visible()
                     assert page.locator("#year-trigger").is_visible()
                     assert page.locator("#year-trigger").evaluate("el => el.getBoundingClientRect().width < 160")
                     page.locator("#year-trigger").click()
                     assert page.locator("#year-options").evaluate("el => el.matches(':popover-open')")
-                    assert page.locator("#year-options .year-option").count() >= 2
+                    assert page.locator("#year-options .select-option").count() >= 2
                     page.locator("#year-options [data-value='2020']").click()
                     assert page.locator("#year-filter").input_value() == "2020"
                     assert page.locator("#year-label").inner_text() == "2020"
@@ -618,17 +617,17 @@ def main():
             assert page.locator("#body").input_value() == "## 完整經歷\\n\\n測試內容"
             page.wait_for_function("!document.querySelector('#submit-button').disabled")
             page.locator("#submit-button").click()
-            page.get_by_text("查看投稿记录").wait_for()
-            page.locator(".language-toggle").click()
             page.get_by_text("View submission").wait_for()
+            page.locator(".language-toggle").click()
+            page.get_by_text("查看投稿記錄").wait_for()
             assert page.locator("#submission-status").get_attribute("data-state") == "success"
-            assert page.locator("#submit-button").inner_text() == "Contribute"
+            assert page.locator("#submit-button").inner_text() == "投稿分享"
             assert len(submissions) == 1
             assert submissions[0]["category"] == "career"
             assert submissions[0]["campus"] == "gz"
             assert submissions[0]["field"] == "某專業"
             assert submissions[0]["turnstileToken"] == "test-token"
-            assert page.evaluate('window.turnstileLanguages') == ['zh-TW', 'zh-CN', 'en']
+            assert page.evaluate('window.turnstileLanguages') == ['zh-TW', 'en', 'zh-TW']
             assert page.locator("#author").input_value() == ""
             context.close()
             # The actual preview server must not load Turnstile on localhost.
@@ -675,6 +674,8 @@ def main():
             context.close()
             browser.close()
             check_languages(playwright, base, articles)
+            from controls_browser import check_controls
+            check_controls(playwright, base)
     finally:
         server.shutdown()
         worker.join()
@@ -691,7 +692,7 @@ def check_languages(playwright, base, articles):
         page = context.new_page()
         errors = []
         page.on("pageerror", lambda error: errors.append(str(error)))
-        for lang, html_lang in (("en", "en"), ("zh", "zh-Hant"), ("zh-CN", "zh-CN")):
+        for lang, html_lang in (("en", "en"), ("zh", "zh-Hant")):
             page.goto(base + PREFIX + "/submit.html?lang=" + lang, wait_until="networkidle")
             page.wait_for_selector('#author')
             assert page.locator('html').get_attribute('lang') == html_lang
@@ -720,7 +721,7 @@ def check_languages(playwright, base, articles):
         assert errors == [], errors
         context.close()
         browser.close()
-        print(f"Trilingual submission flow passed: {engine.name}, {width}px")
+        print(f"Bilingual submission flow passed: {engine.name}, {width}px")
 
 if __name__ == "__main__":
     main()
