@@ -5,6 +5,8 @@
 ## 网站功能
 
 - **经历分享**：按升学深造、学术科研、职业发展、交流访学、创新创业五个方向阅读文章，并按校区、入学年份与学位组合筛选（URL 可分享）。
+
+筛选选项只取当前分类已发布文章中出现的值；「全部经历」取全站文章。校区按 schema 顺序、年份降序、学位按 schema 枚举顺序排列，三个属性按 AND 匹配。选项不随其他属性变化，避免选择过程中反复消失。切换分类保留有效条件，清除该分类不存在的条件并同步 URL；重置只清除属性。年份按入学公历年份聚合，同年 Fall / Spring 共用年份筛选。
 - **站内搜索**：使用构建时生成的 Pagefind 索引搜索作者、去向、专业／研究方向与正文；联系方式不进入索引。
 - **社区投稿**：Cloudflare Worker 校验投稿并创建 Source Issue；维护者以 **Close as completed** 审核后入库。
 - **阅读体验**：支持浅色、深色与系统主题、移动端导航、文章目录和减少动态效果设置。
@@ -26,7 +28,7 @@ HKUST-Feiyue/
 ├── .github/workflows/  # PR 验证、审核入库和跨仓库发布
 ├── assets/             # 样式、脚本和图片
 ├── content/            # 文章与社区投稿 Markdown
-├── data/schema.json    # 投稿分类和字段的唯一规则
+├── data/schema.json    # 投稿分类和字段的唯一规则（含必选 Fall / Spring 入学季）
 ├── scripts/            # 静态构建、索引和审核入库
 ├── tests/              # 单元、Worker 和浏览器回归测试
 ├── worker/             # Cloudflare 投稿接口
@@ -115,4 +117,4 @@ sequenceDiagram
 
 ## 复用与素材来源
 
-本站从 [UEM 飞跃手册](https://github.com/UEM-Feiyue/UEM-Feiyue) 保留完整提交历史迁移，沿用静态架构与发布机制，业务字段统一为九项和五大分享方向。横版标识及 favicon 由维护者提供；校园横幅来自 [HKUST Visit](https://hkust.edu.hk/visit)。演示内容用于展示功能，不代表港科大学生的真实经历。
+本站从 [UEM 飞跃手册](https://github.com/UEM-Feiyue/UEM-Feiyue) 保留完整提交历史迁移，沿用静态架构与发布机制，业务字段统一为十项和五大分享方向。横版标识及 favicon 由维护者提供；校园横幅来自 [HKUST Visit](https://hkust.edu.hk/visit)。演示内容用于展示功能，不代表港科大学生的真实经历。

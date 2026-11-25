@@ -2,6 +2,7 @@
 author: 演示作者 4
 campus: gz
 year: '2023'
+term: fall
 degree: BEng
 field: Data Science
 category: exchange

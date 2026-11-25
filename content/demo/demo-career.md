@@ -2,6 +2,7 @@
 author: 演示作者 3
 campus: hk
 year: '2022'
+term: spring
 degree: MSc
 field: Engineering
 category: career

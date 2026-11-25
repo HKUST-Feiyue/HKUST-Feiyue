@@ -79,7 +79,7 @@ def main():
                     page.goto(base + PREFIX + "/", wait_until="networkidle")
                     assert page.locator("h1:visible").count() == 1
                     first_meta = page.locator(".article-item .article-meta").first.inner_text()
-                    assert first_meta.endswith(articles[0]["year"] + " · " + articles[0]["degree"])
+                    assert first_meta.endswith(articles[0]["year"] + " " + articles[0]["term"].title() + " · " + articles[0]["degree"])
                     assert page.locator(".article-item h3").first.inner_text().startswith(articles[0]["author"] + " · ")
                     assert page.locator(".article-item").first.evaluate("el => el.querySelector('h3').compareDocumentPosition(el.querySelector('.article-meta')) & Node.DOCUMENT_POSITION_FOLLOWING")
                     # A bounded image banner retains aspect ratio at desktop/mobile sizes.
@@ -144,10 +144,10 @@ def main():
                     brand = ".mobile-brand" if width <= 900 else ".sidebar .brand"
                     assert page.locator(brand).is_visible()
                     assert page.locator(brand + " img").evaluate(
-                        "el => el.complete && el.naturalWidth > 0 && el.getAttribute('width') === '498' && el.getAttribute('height') === '94' && getComputedStyle(el).maskImage === 'none'"
+                        "el => el.complete && el.naturalWidth > 0 && el.getAttribute('width') === '498' && el.getAttribute('height') === '94' && getComputedStyle(el).maskImage === 'none' && getComputedStyle(el).filter === 'none'"
                     )
                     assert page.locator(".footer-logo").evaluate(
-                        "el => getComputedStyle(el).backgroundColor === 'rgba(0, 0, 0, 0)' && getComputedStyle(el).paddingTop === '0px'"
+                        "el => getComputedStyle(el).backgroundColor === 'rgba(0, 0, 0, 0)' && getComputedStyle(el).paddingTop === '0px' && getComputedStyle(el).filter === 'none'"
                     )
                     if width > 900:
                         # The viewport-fixed desktop navigation stays independent of
@@ -264,7 +264,7 @@ def main():
                         page.wait_for_url(lambda url: parse_qs(urlsplit(url).query).get("view") == ["all"])
                     assert page.locator(".year-select svg").is_visible()
                     assert page.locator("#year-trigger").is_visible()
-                    assert page.locator("#year-trigger").evaluate("el => el.getBoundingClientRect().width < 160")
+                    assert page.locator("#year-trigger").evaluate("el => el.getBoundingClientRect().width <= document.querySelector('.attribute-filters').getBoundingClientRect().width + 1")
                     page.locator("#year-trigger").click()
                     assert page.locator("#year-options").evaluate("el => el.matches(':popover-open')")
                     assert page.locator("#year-options .select-option").count() >= 2
@@ -297,26 +297,24 @@ def main():
                         }""")
                     assert page.locator("#search-dialog").evaluate("""el => {
                         const dialog = el.getBoundingClientRect();
-                        const button = document.querySelector('.search-open').getBoundingClientRect();
-                        const expectedTop = button.bottom + 12;
-                        const actualTop = dialog.top;
-                        return Math.abs(actualTop - expectedTop) < 3 &&
-                            Math.abs((dialog.left + dialog.right) / 2 - innerWidth / 2) < 2 &&
-                            (innerWidth > 900 || button.bottom <= document.querySelector('.topbar').getBoundingClientRect().bottom);
+                        const expectedLeft = innerWidth <= 900 ? 0 : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar'));
+                        const field=el.querySelector('.search-field').getBoundingClientRect();
+                        return Math.abs(dialog.top)<2 && Math.abs(dialog.left-expectedLeft)<2 &&
+                            Math.abs(dialog.right-innerWidth)<2 && field.top >= (innerWidth<=900 ? 24 : 32) &&
+                            field.height<=47 && field.width<=681;
                     }""")
                     if width <= 900:
                         assert page.locator('#search-dialog').evaluate("""el => {
                             const viewport = visualViewport;
                             Object.defineProperty(viewport, 'height', {configurable: true, value: 360});
                             viewport.dispatchEvent(new Event('resize'));
-                            const available = 360 + viewport.offsetTop - el.getBoundingClientRect().top - 12;
-                            const fits = parseFloat(getComputedStyle(el).maxHeight) <= available + 1;
+                            const fits = el.getBoundingClientRect().height <= 361;
                             delete viewport.height;
                             viewport.dispatchEvent(new Event('resize'));
                             return fits;
                         }""")
                     page.locator("#search").fill("no-matching-story-987654321")
-                    assert page.locator(".article-item:visible").count() == visible_before_search
+                    assert page.locator(".article-item:not([hidden])").count() == visible_before_search
                     page.wait_for_function("document.querySelector('#search-results').textContent.includes('沒有找到匹配內容')")
                     page.locator("#search").fill("官方")
                     page.locator("#search-results li a").first.wait_for(state="visible")
@@ -335,17 +333,19 @@ def main():
                             const box = main.getBoundingClientRect();
                             const content = article.getBoundingClientRect();
                             const style = getComputedStyle(main);
-                            return Math.abs(content.left - box.left - parseFloat(style.paddingLeft)) < 2 &&
-                                Math.abs(content.right - box.right + parseFloat(style.paddingRight)) < 2;
+                            return content.width <= 761 && Math.abs((content.left + content.right) - (box.left + box.right)) < 2;
                         }""")
                     assert page.locator(".demo-badge").is_visible() == opened_article["demo"]
                     assert page.locator(".article-toc").count() <= 1
                     if page.locator(".article-toc").count():
                         assert page.locator(".article-toc").evaluate("el => el.tagName") == "DETAILS"
-                        assert page.locator(".article-toc-side").count() == 0
-                        page.locator(".article-toc summary").click()
-                        assert page.locator(".article-toc").get_attribute("open") is not None
-                        assert page.locator(".article-toc a").first.is_visible()
+                        assert page.locator(".article-toc-side").count() == 1
+                        if width < 1600:
+                            page.locator(".article-toc summary").click()
+                            assert page.locator(".article-toc").get_attribute("open") is not None
+                            assert page.locator(".article-toc a").first.is_visible()
+                        else:
+                            assert page.locator('.article-toc-side a').first.is_visible()
 
                     assert page.locator("#category-nav [aria-current='page']").count() == 1
                     assert page.locator(".site-footer").count() == 1
@@ -377,6 +377,7 @@ def main():
                     page.locator("#year").fill("abcd")
                     assert not page.locator("#year").evaluate("el => el.checkValidity()")
                     page.locator("#year").fill("2026")
+                    page.locator("#term").select_option("fall")
                     page.locator('[name="campus"][value="hk"]').check()
                     page.locator("#degree").select_option("BSc")
                     page.locator("#category").select_option("career")
@@ -527,6 +528,7 @@ def main():
             page.locator("#category").select_option("further-studies")
             page.locator("#author").fill("演示作者 1")
             page.locator("#year").fill("2020")
+            page.locator("#term").select_option("fall")
             page.locator('[name="campus"][value="hk"]').check()
             page.locator("#degree").select_option("BSc")
             page.locator("#field").fill("Computer Science")
@@ -578,7 +580,14 @@ def main():
             page.locator('#year-options [data-value="2020"]').click()
             assert page.locator('#empty-state').is_visible()
             page.locator('#category-nav [data-category="research"]').click()
-            assert page.locator('#degree-filter').input_value() == 'MBA'
+            page.wait_for_function("document.querySelector('#degree-filter').value === 'all' && !location.search.includes('degree=')")
+            assert page.locator('#degree-filter').input_value() == 'all'
+            for key,expected in (('campus',['all','gz']),('year',['all','2021']),('degree',['all','MPhil'])):
+                assert page.locator('#'+key+'-filter option').evaluate_all('(options)=>options.map(option=>option.value)') == expected
+                assert key+'=' not in page.url
+            page.locator('#year-trigger').click()
+            assert page.locator('#year-options [data-value]').count() == 2
+            page.locator('#year-trigger').click()
             page.locator('#reset-filters').click()
             assert 'category=research' in page.url and 'degree=' not in page.url
             assert page.locator('.article-item:visible').count() == 1
@@ -607,6 +616,7 @@ def main():
             page.locator("#category").select_option("career")
             page.locator("#author").fill("測試同學")
             page.locator("#year").fill("2026")
+            page.locator("#term").select_option("fall")
             page.locator('[name="campus"][value="gz"]').check()
             page.locator("#degree").select_option("MPhil")
             page.locator("#field").fill("某專業")
@@ -679,6 +689,8 @@ def main():
             check_controls(playwright, base)
             from locale_browser import check_locale
             check_locale(playwright, base, articles)
+            from reading_browser import check_reading
+            check_reading(playwright, base, articles)
     finally:
         server.shutdown()
         worker.join()
@@ -704,7 +716,7 @@ def check_languages(playwright, base, articles):
             for name, value in {"author":"Alex / 傅", "year":"2024", "field":"Computing / 计算机", "destination":"Test / 测试", "body":"## Journey\n\n**Experience**"}.items():
                 page.locator('#' + name).fill(value)
             page.locator('[name="campus"][value="gz"]').check()
-            for name,value in {"degree":"MPhil","category":"research"}.items():
+            for name,value in {"term":"fall","degree":"MPhil","category":"research"}.items():
                 page.locator('#' + name).select_option(value)
             page.locator('[data-contact="type"]').fill('Email')
             page.locator('#preview-button').click()

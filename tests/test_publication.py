@@ -19,7 +19,7 @@ PEM = KEY.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.
 
 
 def fixture():
-    record = {"version": 1, "category": "career", "author": "张同学 / Alex", "year": "2026", "campus": "gz", "degree": "MPhil", "field": "某专业",
+    record = {"version": 1, "category": "career", "author": "张同学 / Alex", "year": "2026", "term": "fall", "campus": "gz", "degree": "MPhil", "field": "某专业",
               "destination": "某企业", "body": "## 我的经历 / My journey\n\n具体经历。Lessons learned.",
               "contact": []}
     payload = base64.urlsafe_b64encode(json.dumps(record, ensure_ascii=False).encode()).decode().rstrip("=")
