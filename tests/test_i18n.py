@@ -2,13 +2,29 @@
 import json
 from pathlib import Path
 import unittest
+import tempfile
+import re
 
-from scripts.site_i18n import Localize
+from scripts.site_i18n import Localize, generate
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class LanguageTests(unittest.TestCase):
+    def test_embedded_dictionary_is_safe_and_preserves_original_data(self):
+        translations = {'en': {'首页': '</script><script>alert(1)</script>'}, 'zh': {'首页': '首頁'}}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'data').mkdir()
+            (root / 'data/i18n.json').write_text(json.dumps(translations), encoding='utf-8')
+            (root / 'index.html').write_text('<html><head></head><body><h1 data-i18n-ignore>原文 / العربية 🙂</h1></body></html>', encoding='utf-8')
+            generate(root)
+            result = (root / 'index.html').read_text(encoding='utf-8')
+            payload = re.search(r'<script id="site-translations" type="application/json">(.*?)</script>', result)[1]
+            self.assertEqual(json.loads(payload), translations)
+            self.assertNotIn('</script><script>alert(1)', result)
+            self.assertIn('原文 / العربية 🙂', result)
+
     def test_default_english_and_explicit_content_boundary(self):
         source = ('<html lang="zh-CN"><head><title>首页</title>'
                   '<meta name="description" content="首页" data-i18n-ignore></head>'

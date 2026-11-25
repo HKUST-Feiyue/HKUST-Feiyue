@@ -23,7 +23,7 @@ class SubmissionBuildTests(unittest.TestCase):
         self.assertIn("height:clamp(270px,30vw,440px)", stylesheet)
         self.assertIn("height:clamp(220px,60vw,320px)", stylesheet)
         self.assertNotIn("@view-transition{navigation:auto}", stylesheet)
-        self.assertIn("position:sticky;top:0;z-index:50", stylesheet)
+        self.assertIn("position:fixed;top:0;left:0;right:0;z-index:50", stylesheet)
         self.assertIn("--mobile-header-height:72px", stylesheet)
         self.assertNotIn(".shell.menu-open::before", stylesheet)
         self.assertRegex(stylesheet, r"body\{[^}]*background:var\(--bg\)")

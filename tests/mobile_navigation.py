@@ -43,7 +43,7 @@ def main():
                     assert page.locator(".mobile-brand-logo").is_visible()
                     assert page.locator(".menu-button").is_visible()
                     assert page.locator(".topbar").evaluate(
-                        "el => getComputedStyle(el).position === 'sticky'"
+                        "el => getComputedStyle(el).position === 'fixed'"
                     )
                     assert page.locator(".campus-banner").evaluate(
                         "el => Math.abs(el.getBoundingClientRect().top - "
@@ -57,6 +57,26 @@ def main():
                     )
                     page.evaluate("window.scrollTo({top:document.documentElement.scrollHeight,behavior:'instant'})")
                     page.wait_for_function("scrollY > 100")
+                    # Boundary pressure and changing viewport heights must not move
+                    # or compress the fixed mobile navigation, including with a menu open.
+                    for height in (780, 650, 780):
+                        page.set_viewport_size({'width':width,'height':height})
+                        samples = page.evaluate("""async () => {
+                            const samples=[];
+                            for (const top of [1e7,1e7,0,-200,0,1e7]) {
+                                scrollTo({top,behavior:'instant'});
+                                await new Promise(requestAnimationFrame);
+                                const rect=document.querySelector('.topbar').getBoundingClientRect();
+                                samples.push({top:rect.top,height:rect.height,width:rect.width});
+                            }
+                            return samples;
+                        }""")
+                        assert all(abs(sample['top'])<.5 and abs(sample['height']-72)<.5 and abs(sample['width']-width)<.5 for sample in samples),samples
+                    assert page.evaluate("!CSS.supports('overscroll-behavior-y','none') || getComputedStyle(document.documentElement).overscrollBehaviorY==='none'"), page.evaluate("({support:CSS.supports('overscroll-behavior-y','none'),value:getComputedStyle(document.documentElement).overscrollBehaviorY})")
+                    page.locator('#menu-toggle').click()
+                    page.evaluate('scrollTo(0,document.documentElement.scrollHeight)')
+                    assert page.locator('.topbar').evaluate('el=>Math.abs(el.getBoundingClientRect().top)<.5')
+                    page.locator('#menu-toggle').click()
                     page.locator(".mobile-brand").click()
                     page.wait_for_function("scrollY <= 2")
                     page.locator("#menu-toggle").click()

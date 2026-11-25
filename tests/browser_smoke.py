@@ -377,7 +377,7 @@ def main():
                     page.locator("#year").fill("abcd")
                     assert not page.locator("#year").evaluate("el => el.checkValidity()")
                     page.locator("#year").fill("2026")
-                    page.locator("#campus").select_option("hk")
+                    page.locator('[name="campus"][value="hk"]').check()
                     page.locator("#degree").select_option("BSc")
                     page.locator("#category").select_option("career")
                     page.locator("#field").fill("Computing")
@@ -527,7 +527,7 @@ def main():
             page.locator("#category").select_option("further-studies")
             page.locator("#author").fill("演示作者 1")
             page.locator("#year").fill("2020")
-            page.locator("#campus").select_option("hk")
+            page.locator('[name="campus"][value="hk"]').check()
             page.locator("#degree").select_option("BSc")
             page.locator("#field").fill("Computer Science")
             page.locator("#destination").fill("示例项目 1")
@@ -607,7 +607,7 @@ def main():
             page.locator("#category").select_option("career")
             page.locator("#author").fill("測試同學")
             page.locator("#year").fill("2026")
-            page.locator("#campus").select_option("gz")
+            page.locator('[name="campus"][value="gz"]').check()
             page.locator("#degree").select_option("MPhil")
             page.locator("#field").fill("某專業")
             page.locator("#destination").fill("某公司")
@@ -668,7 +668,8 @@ def main():
             page.wait_for_function("""() => {
                 const link = [...document.querySelectorAll('.article-toc a')].at(-1);
                 const target = document.getElementById(decodeURIComponent(link.hash.slice(1)));
-                const top = Math.min(target.getBoundingClientRect().top + scrollY - 24, document.documentElement.scrollHeight - innerHeight);
+                const offset = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop);
+                const top = Math.min(target.getBoundingClientRect().top + scrollY - offset, document.documentElement.scrollHeight - innerHeight);
                 return Math.abs(scrollY - top) < 4;
             }""")
             context.close()
@@ -676,6 +677,8 @@ def main():
             check_languages(playwright, base, articles)
             from controls_browser import check_controls
             check_controls(playwright, base)
+            from locale_browser import check_locale
+            check_locale(playwright, base, articles)
     finally:
         server.shutdown()
         worker.join()
@@ -700,7 +703,8 @@ def check_languages(playwright, base, articles):
             assert page.locator('#dynamic-fields > .field > label').first.get_attribute('for') == 'author'
             for name, value in {"author":"Alex / 傅", "year":"2024", "field":"Computing / 计算机", "destination":"Test / 测试", "body":"## Journey\n\n**Experience**"}.items():
                 page.locator('#' + name).fill(value)
-            for name,value in {"campus":"gz","degree":"MPhil","category":"research"}.items():
+            page.locator('[name="campus"][value="gz"]').check()
+            for name,value in {"degree":"MPhil","category":"research"}.items():
                 page.locator('#' + name).select_option(value)
             page.locator('[data-contact="type"]').fill('Email')
             page.locator('#preview-button').click()
