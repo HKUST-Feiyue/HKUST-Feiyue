@@ -3,7 +3,8 @@ def check_controls(playwright, base):
     for engine in (playwright.chromium, playwright.webkit):
         browser = engine.launch()
         for width, theme in ((320, 'dark'), (390, 'light'), (1440, 'dark'), (1440, 'light')):
-            context = browser.new_context(viewport={'width':width, 'height':900}, reduced_motion='reduce')
+            context = browser.new_context(viewport={'width':width, 'height':900}, reduced_motion='reduce',
+                                          is_mobile=width < 500, has_touch=width < 500)
             context.route('**/assets/js/submission-config.js*', lambda route: route.fulfill(
                 content_type='application/javascript', body='window.HKUST_SUBMISSION_CONFIG={enabled:false};'))
             page = context.new_page()
@@ -44,10 +45,14 @@ def check_controls(playwright, base):
             page.keyboard.press('Home')
             page.keyboard.press('Escape')
             assert page.locator('#degree').input_value() == 'MPhil'
-            page.locator('#category-trigger').click()
-            page.locator('#category-options [data-value=research]').click()
+            if width < 500:
+                page.locator('#category-trigger').tap()
+                page.locator('#category-options [data-value=research]').tap()
+            else:
+                page.locator('#category-trigger').click()
+                page.locator('#category-options [data-value=research]').click()
             page.locator('#preview-button').click()
-            assert page.locator('#preview').is_visible()
+            assert page.locator('#preview').is_visible(), page.evaluate("[...document.querySelectorAll('select')].map(el=>[el.id,el.value,el.validationMessage])")
             before = page.locator('#preview-text').inner_text()
             assert 'العربية 🙂' in before and '简体' in before
             page.locator('.language-toggle').click()

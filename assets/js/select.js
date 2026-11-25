@@ -117,7 +117,17 @@
             row.dataset.value = option.value;
             row.textContent = option.textContent;
             row.addEventListener('pointerdown', event => event.preventDefault());
-            row.addEventListener('click', () => { active = options.indexOf(row); commit(); });
+            row.addEventListener('pointerup', event => {
+              if (event.pointerType !== 'touch') return;
+              event.preventDefault();
+              active = options.indexOf(row);
+              commit();
+            });
+            row.addEventListener('click', () => {
+              if (!isOpen()) return;
+              active = options.indexOf(row);
+              commit();
+            });
             options.push(row);
             (groups.get(group) || panel).append(row);
           }
