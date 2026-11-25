@@ -75,6 +75,10 @@ class Localize(HTMLParser):
 
 
 def generate(root):
-    dictionary = json.loads((root / 'data/i18n.json').read_text(encoding='utf-8'))['en']
+    translations = json.loads((root / 'data/i18n.json').read_text(encoding='utf-8'))
+    dictionary = translations['en']
+    embedded = json.dumps(translations, ensure_ascii=True).replace('<', r'\u003c').replace('>', r'\u003e').replace('&', r'\u0026')
     for path in root.rglob('*.html'):
-        path.write_text(Localize(path.read_text(encoding='utf-8'), dictionary).result(), encoding='utf-8')
+        source = Localize(path.read_text(encoding='utf-8'), dictionary).result()
+        source = source.replace('</head>', '<script id="site-translations" type="application/json">' + embedded + '</script>\n</head>', 1)
+        path.write_text(source, encoding='utf-8')

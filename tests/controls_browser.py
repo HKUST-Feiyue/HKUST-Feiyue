@@ -25,15 +25,18 @@ def check_controls(playwright, base):
             page.locator('#destination').fill('Destination / 去向')
             page.locator('#body').fill('## 经历 / 經歷 / 経験\n\nالعربية 🙂')
             page.locator('#preview-button').click()
-            assert page.locator('#campus-trigger').get_attribute('aria-invalid') == 'true'
-            assert page.locator('#campus-error').is_visible()
-            page.locator('#campus-trigger').click()
-            page.keyboard.press('End')
-            page.keyboard.press('Enter')
-            assert page.locator('#campus').input_value() == 'gz', page.evaluate("({value:document.querySelector('#campus').value,focus:document.activeElement.id,expanded:document.querySelector('#campus-trigger').getAttribute('aria-expanded')})")
+            assert page.locator('[name="campus"]:checked').count() == 0
+            assert page.locator('#campus-trigger').count() == 0
+            page.locator('[name="campus"][value="gz"]').check()
+            assert page.locator('#campus').input_value() == 'gz'
             page.locator('#degree-trigger').click()
             page.wait_for_function("document.querySelector('#degree-trigger').getAttribute('aria-expanded')==='true'")
             assert page.locator('#degree-options .select-group').count() == 4
+            assert page.locator('#degree-options [data-value=""]').count() == 0
+            page.locator('#degree-trigger .select-value').click()
+            assert not page.locator('#degree-options').evaluate("el=>el.matches(':popover-open')")
+            page.locator('#degree-trigger svg').click()
+            assert page.locator('#degree-options').evaluate("el=>el.matches(':popover-open')")
             assert page.locator('#degree-options').evaluate(
                 'el=>el.scrollHeight>el.clientHeight && el.getBoundingClientRect().height<=322 && el.getBoundingClientRect().right<=innerWidth-10 && el.getBoundingClientRect().bottom<=innerHeight-6')
             assert page.locator('#degree-options').evaluate(
