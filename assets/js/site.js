@@ -327,11 +327,8 @@
   });
   dialog.tabIndex = -1;
   const positionSearch = () => {
-    const top = searchOpen.getBoundingClientRect().bottom + 12;
-    dialog.style.setProperty('--search-top', Math.round(top) + 'px');
     if (mobile.matches) {
       const viewport = window.visualViewport;
-      const bottom = (viewport?.offsetTop || 0) + (viewport?.height || innerHeight);
       dialog.style.setProperty('--search-viewport-height', Math.round(viewport?.height || innerHeight) + 'px');
       dialog.style.top = (viewport?.offsetTop || 0) + 'px';
       return;

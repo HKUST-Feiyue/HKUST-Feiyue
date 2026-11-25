@@ -279,22 +279,31 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 .search-dialog {
   position: fixed;
-  top: var(--search-top, 132px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(460px, calc(100% - 32px));
-  max-height: min(580px, var(--search-available, calc(100dvh - var(--search-top, 132px) - 16px)));
+  inset: 0 0 0 var(--sidebar);
+  width: calc(100% - var(--sidebar));
+  max-width: none;
+  height: var(--search-viewport-height,100dvh);
+  max-height: none;
   margin: 0;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  padding: 32px clamp(24px,4vw,64px);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  overflow: hidden;
+}
+html:has(.search-dialog[open]) { overflow: hidden; }
+html:has(.search-dialog[open]) :is(main, .site-footer, .campus-banner) { visibility: hidden; }
+.search-dialog>.search-field, .search-dialog>#search-results {
+  width: min(680px,100%);
+  margin-inline: auto;
+  border: 1px solid var(--line);
   border-radius: 14px;
   background: color-mix(in srgb,var(--surface) 82%,transparent);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  color: var(--text);
-  box-shadow: 0 16px 48px rgba(18,19,23,.14);
-  overflow: hidden;
 }
+.search-dialog>#search-results { margin-top: 12px; overscroll-behavior-y: contain; }
 
 .search-dialog[open] {
   display: flex;
@@ -302,7 +311,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 
 .search-dialog::backdrop {
-  background: rgba(18,19,23,.3);
+  background: linear-gradient(to right,transparent var(--sidebar),color-mix(in srgb,var(--bg) 25%,transparent) var(--sidebar));
 }
 
 .search-field {
@@ -1919,33 +1928,13 @@ proportions; no composition, mask, crop or duplicate seal. */
   .entry-period { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .article-page>time { display: block; margin: 12px 0 20px; }
 
-  html:has(.search-dialog[open]) { overflow: hidden; }
-  html:has(.search-dialog[open]) :is(.topbar, .sidebar, main, .site-footer, .campus-banner) { visibility: hidden; }
+  html:has(.search-dialog[open]) :is(.topbar, .sidebar) { visibility: hidden; }
   .search-dialog {
     inset: 0;
-    transform: none;
     width: 100%;
-    max-width: none;
-    height: var(--search-viewport-height,100dvh);
-    max-height: none;
-    padding: max(6px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    visibility: visible;
+    padding: calc(24px + env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));
   }
   .search-dialog::backdrop { background: color-mix(in srgb,var(--bg) 25%,transparent); }
-  .search-field, #search-results {
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: color-mix(in srgb,var(--surface) 82%,transparent);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-  }
-  #search-results { margin-top: 12px; overscroll-behavior-y: contain; }
 
   .search-open {
     width: 44px;

@@ -40,7 +40,8 @@ def check_reading(playwright, base, articles):
                     assert page.locator('.search-field').evaluate('el=>el.getBoundingClientRect().height<=47')
                     assert page.locator('#search').evaluate('el=>document.activeElement===el')
                     if width>900:
-                        assert page.locator('#search-dialog').evaluate('el=>el.getBoundingClientRect().height<=47')
+                        assert page.locator('#search-results').is_hidden()
+                        assert page.locator('#search-dialog').evaluate('el=>el.getBoundingClientRect().left>=document.querySelector(".sidebar").getBoundingClientRect().right-1')
                     page.locator('#search').fill(articles[0]['author'])
                     page.locator('#search-results li a').first.wait_for(state='visible')
                     page.keyboard.press('Escape')

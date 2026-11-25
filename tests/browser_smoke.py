@@ -297,12 +297,11 @@ def main():
                         }""")
                     assert page.locator("#search-dialog").evaluate("""el => {
                         const dialog = el.getBoundingClientRect();
-                        const button = document.querySelector('.search-open').getBoundingClientRect();
-                        const expectedTop = button.bottom + 12;
-                        const actualTop = dialog.top;
-                        return (innerWidth <= 900 ? Math.abs(actualTop) < 2 && Math.abs(dialog.width-innerWidth)<2 : Math.abs(actualTop - expectedTop) < 3) &&
-                            Math.abs((dialog.left + dialog.right) / 2 - innerWidth / 2) < 2 &&
-                            (innerWidth > 900 || button.bottom <= document.querySelector('.topbar').getBoundingClientRect().bottom);
+                        const expectedLeft = innerWidth <= 900 ? 0 : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar'));
+                        const field=el.querySelector('.search-field').getBoundingClientRect();
+                        return Math.abs(dialog.top)<2 && Math.abs(dialog.left-expectedLeft)<2 &&
+                            Math.abs(dialog.right-innerWidth)<2 && field.top >= (innerWidth<=900 ? 24 : 32) &&
+                            field.height<=47 && field.width<=681;
                     }""")
                     if width <= 900:
                         assert page.locator('#search-dialog').evaluate("""el => {
