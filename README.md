@@ -1,11 +1,11 @@
 # HKUST-Feiyue
 
-由同学共同维护的香港科技大学考研、留学、就业和考公考编经历分享站。本仓库是唯一的源码与构建入口；生成的静态文件发布到 [HKUST-Feiyue.github.io](https://github.com/HKUST-Feiyue/HKUST-Feiyue.github.io)，由 [GitHub Pages](https://hkust-feiyue.github.io/) 托管。
+由同学共同维护的香港科技大学升学深造、学术科研、职业发展、交流访学与创新创业经历分享站。本仓库是唯一的源码与构建入口；生成的静态文件发布到 [HKUST-Feiyue.github.io](https://github.com/HKUST-Feiyue/HKUST-Feiyue.github.io)，由 [GitHub Pages](https://hkust-feiyue.github.io/) 托管。
 
 ## 网站功能
 
-- **经历分享**：按考研、留学、就业、考公考编四个方向阅读文章，并按届次筛选。
-- **站内搜索**：使用构建时生成的 Pagefind 索引搜索文章正文。
+- **经历分享**：按升学深造、学术科研、职业发展、交流访学、创新创业五个方向阅读文章，并按校区、入学年份与学位组合筛选（URL 可分享）。
+- **站内搜索**：使用构建时生成的 Pagefind 索引搜索作者、去向、专业／研究方向与正文；联系方式不进入索引。
 - **社区投稿**：Cloudflare Worker 校验投稿并创建 Source Issue；维护者以 **Close as completed** 审核后入库。
 - **阅读体验**：支持浅色、深色与系统主题、移动端导航、文章目录和减少动态效果设置。
 
@@ -13,11 +13,11 @@
 
 ## 語言與投稿原文
 
-網站首次訪問預設英文，提供英文與繁體中文切換。語言按鈕會保存選擇，`?lang=en` 或 `?lang=zh` 可指定本次訪問語言；切換時保留分類、屆次、草稿及預覽。
+網站首次訪問預設英文，提供英文、繁體中文與簡體中文切換。語言按鈕會保存選擇，`?lang=en`、`?lang=zh` 或 `?lang=zh-CN` 可指定本次訪問語言；切換時保留分類、屬性篩選、草稿及預覽。
 
-`data/i18n.json` 集中維護兩種介面語言，構建時輸出英文靜態介面，瀏覽器沿用 HAI-HKUST 的語言偏好與查詢參數機制。投稿分類及欄位規則仍由 `data/schema.json` 定義。
+`data/i18n.json` 集中維護三種介面語言，構建時輸出英文靜態介面，瀏覽器沿用 HAI-HKUST 的語言偏好與查詢參數機制。投稿分類及欄位規則仍由 `data/schema.json` 定義。
 
-投稿人可自由使用中文、英文或混合書寫。姓名、學院、專業、去向、正文與聯絡方式以原文保存、預覽、搜尋及發布，不隨介面語言翻譯或轉換簡繁；網站內建的中文示例使用繁體。
+投稿人可自由使用中文、英文或混合書寫。姓名、專業／研究方向、去向、正文與聯絡方式以原文保存、預覽、搜尋及發布，不隨介面語言翻譯或轉換簡繁。
 
 ## 项目结构
 
@@ -99,7 +99,7 @@ sequenceDiagram
 
 `scripts/site_metadata.py` 在构建时统一生成每页独立的 canonical、Open Graph、Twitter Card、`sitemap.xml` 和 `robots.txt`，并在产物替换前检查一致性与本地分享图片。页面标题和摘要沿用各页面及文章自己的内容；筛选参数归一到首页，文章保留实际 `.html` 路由。演示文章继续保留可见「演示」标记。
 
-这与个人站采用同一工程原则：站点信息单一来源、生成产物统一验证，不引入跨仓库运行依赖。本站没有可靠的文章发布日期，不将毕业届次冒充发布日期生成 RSS 或结构化时间。sitemap 使用绝对 canonical URL，遵循 [Google 的 sitemap 指引](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)。构建验证不代表搜索引擎已经收录。
+这与个人站采用同一工程原则：站点信息单一来源、生成产物统一验证，不引入跨仓库运行依赖。文章发布时间由审核完成时间记录；入学年份仅用于背景和筛选。sitemap 使用绝对 canonical URL，遵循 [Google 的 sitemap 指引](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)。构建验证不代表搜索引擎已经收录。
 
 ## 文档与参与
 
@@ -115,4 +115,4 @@ sequenceDiagram
 
 ## 复用与素材来源
 
-本站从 [UEM 飞跃手册](https://github.com/UEM-Feiyue/UEM-Feiyue) 保留完整提交历史迁移，沿用原有四类经历、投稿字段与发布机制。横版标识及 favicon 由维护者提供；校园横幅来自 [HKUST Visit](https://hkust.edu.hk/visit)。演示内容用于展示功能，不代表港科大学生的真实经历。
+本站从 [UEM 飞跃手册](https://github.com/UEM-Feiyue/UEM-Feiyue) 保留完整提交历史迁移，沿用静态架构与发布机制，业务字段统一为九项和五大分享方向。横版标识及 favicon 由维护者提供；校园横幅来自 [HKUST Visit](https://hkust.edu.hk/visit)。演示内容用于展示功能，不代表港科大学生的真实经历。

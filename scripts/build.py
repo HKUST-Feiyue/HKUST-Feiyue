@@ -8,6 +8,8 @@ from urllib.parse import quote
 
 import yaml
 from scripts.markdown_render import render_markdown
+from scripts.submission_schema import validate_fields
+from datetime import datetime
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTENT = ROOT / "content"
@@ -29,30 +31,36 @@ def parse(path):
     body = match.group(2).strip()
     if meta.get("category") not in CATEGORIES:
         raise ValueError(f"{path}: unknown category {meta.get('category')}")
-    values = dict(meta, body=body)
-    for field in SCHEMA["fields"]:
-        name = field["name"]
-        value = values.get(name, "")
-        if not isinstance(value, (str, int)) or isinstance(value, bool):
-            raise ValueError(f"{path}: invalid {name}")
-        value = str(value).strip()
-        if field.get("required") and not value:
-            raise ValueError(f"{path}: missing {name}")
-        if field.get("maxLength") and len(value) > field["maxLength"]:
-            raise ValueError(f"{path}: {name} exceeds maximum length")
-        if value and field.get("pattern") and not re.fullmatch(field["pattern"], value):
-            raise ValueError(f"{path}: invalid {name}")
-    meta["year"] = str(meta["year"]).strip()
+    allowed = {x["name"] for x in SCHEMA["fields"]} - {"body"}
+    if set(meta) - allowed - {"demo", "source_issue", "published_at"}:
+        raise ValueError(f"{path}: unexpected metadata")
+    clean = validate_fields(dict(meta, body=body))
+    meta.update({k: v for k, v in clean.items() if k != "body"})
+    published = meta.get("published_at")
+    if not isinstance(published, str):
+        raise ValueError(f"{path}: missing publication date")
+    datetime.fromisoformat(published.replace("Z", "+00:00"))
     if path.stem == "README":
         raise ValueError("README cannot be an article")
     return meta, body
 
 
+def excerpt(body):
+    from html.parser import HTMLParser
+    class Text(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.parts = []
+        def handle_data(self, data):
+            self.parts.append(data)
+    parser = Text()
+    parser.feed(render_markdown(body))
+    return re.sub(r"\s+", " ", " ".join(parser.parts)).strip()[:150]
+
+
 def display_title(meta):
     """One title convention shared by archive cards and article pages."""
-    title = str(meta.get("destination") or "").strip()
-    program = str(meta.get("program") or "").strip()
-    return title + (" · " + program if program else "")
+    return str(meta["author"]).strip() + " · " + str(meta["destination"]).strip()
 
 
 def ui(key, **params):
@@ -101,18 +109,21 @@ def shared_chrome(source, page, prefix="./", category=None):
 
 def render(meta, body, url):
     clean = render_markdown(body)
-    byline = " · ".join(ui('{year} ' + YEAR_SUFFIX, year=meta[k]) if k == "year" else original(meta[k]) for k in ("author", "year", "college", "major") if meta.get(k))
+    byline = " · ".join([ui(next(x["label"] for x in next(field for field in SCHEMA["fields"] if field["name"] == "campus")["options"] if x["value"] == meta["campus"])), original(meta["year"]), original(meta["degree"])])
     headings = re.findall(r'<h([23]) id="([^"]+)">(.+?)</h[23]>', clean)
     toc = '<details class="article-toc"><summary>本页目录</summary><div class="article-toc-panel"><div class="article-toc-clip"><ul>' + ''.join(f'<li class="toc-depth-{level}"><a data-i18n-ignore href="#{html.escape(anchor, quote=True)}">{text}</a></li>' for level, anchor, text in headings) + '</ul></div></div></details>' if len(headings) >= 2 else ''
     demo = '<span class="demo-badge">演示</span>' if meta.get('demo') is True else ''
-    contact = f'<aside class="article-contact"><strong>联系作者</strong><p data-i18n-ignore>{html.escape(str(meta["contact"]))}</p></aside>' if meta.get("contact") else ""
+    contact = ''
+    if meta.get("contact"):
+        rows = ''.join('<p><span data-i18n-ignore>' + html.escape(row["type"]) + '：' + html.escape(row["value"]) + '</span> <button type="button" class="copy-contact" data-copy="' + html.escape(row["value"], quote=True) + '">复制</button></p>' for row in meta["contact"])
+        contact = '<aside class="article-contact" data-pagefind-ignore><strong>联系作者</strong>' + rows + '</aside>'
     source = shared_chrome((ROOT / "index.html").read_text(encoding="utf-8"), "article", "../", meta["category"])
     source = source.replace("<body data-pagefind-ignore>", "<body>", 1)
     title = html.escape(display_title(meta))
     source = re.sub(r'<title>.*?</title>', lambda _: f'<title data-i18n-ignore>{title} · HKUST Feiyue</title>', source, count=1, flags=re.S)
-    description = html.escape(str(meta.get("excerpt") or display_title(meta)), quote=True)
+    description = html.escape(excerpt(body), quote=True)
     source = re.sub(r'<meta name="description"[^>]*>', lambda _: f'<meta name="description" content="{description}" data-i18n-ignore>', source, count=1)
-    content = f'<article class="article-page"><a class="article-back" href="../?category={quote(str(meta["category"]))}"><span class="link-arrow link-arrow-left" aria-hidden="true"></span> {ui("返回{category}", category=CATEGORIES[meta["category"]])}</a><h1 data-pagefind-meta="title" data-i18n-ignore>{title}</h1>{demo}<p class="article-byline" data-pagefind-meta="byline">{byline}</p>{toc}<div class="article-body" data-pagefind-body>{clean}</div>{contact}</article>'
+    content = f'<article class="article-page" data-pagefind-body><a class="article-back" href="../?category={quote(str(meta["category"]))}"><span class="link-arrow link-arrow-left" aria-hidden="true"></span> {ui("返回{category}", category=CATEGORIES[meta["category"]])}</a><h1 data-pagefind-meta="title" data-i18n-ignore>{title}</h1>{demo}<p class="article-byline" data-pagefind-meta="byline">{byline}</p><p class="article-field" data-i18n-ignore>{html.escape(meta["field"])}</p><time datetime="{html.escape(meta["published_at"], quote=True)}">{html.escape(meta["published_at"][:10])}</time>{toc}<div class="article-body">{clean}</div>{contact}</article>'
     return re.sub(r'(<main[^>]*>).*?(</main>)', lambda m: m[1] + content + m[2], source, count=1, flags=re.S)
 
 
@@ -122,11 +133,16 @@ def render_home(entries):
     for entry in entries:
         badge = '<span class="demo-badge">演示</span>' if entry["demo"] else ''
         esc = lambda value: html.escape(str(value), quote=True)
-        label = ' · '.join([ui('{year} ' + YEAR_SUFFIX, year=entry['year']), *(original(entry[k]) for k in ('college', 'major') if entry[k])])
-        cards.append(f'<article class="article-item" data-category="{esc(entry["category"])}" data-year="{esc(entry["year"])}" data-demo="{str(entry["demo"]).lower()}">{badge}<h3 data-i18n-ignore><a href="./{esc(entry["url"])}">{esc(entry["author"])} — {esc(entry["title"])}</a></h3><p class="article-meta">{label}</p><a class="article-more" href="./{esc(entry["url"])}">阅读全文<span class="link-arrow"></span></a></article>')
+        label = ' · '.join([ui(next(x["label"] for x in next(field for field in SCHEMA["fields"] if field["name"] == "campus")["options"] if x["value"] == entry["campus"])), original(entry["year"]), original(entry["degree"])])
+        cards.append(f'<article class="article-item" data-category="{esc(entry["category"])}" data-campus="{esc(entry["campus"])}" data-degree="{esc(entry["degree"])}" data-year="{esc(entry["year"])}" data-demo="{str(entry["demo"]).lower()}">{badge}<h3 data-i18n-ignore><a href="./{esc(entry["url"])}">{esc(entry["title"])}</a></h3><p class="article-meta">{label}</p><p class="article-field" data-i18n-ignore>{esc(entry["field"])}</p><p data-i18n-ignore>{esc(entry["excerpt"])}</p><time datetime="{esc(entry["published_at"])}">{esc(entry["published_at"][:10])}</time><a class="article-more" href="./{esc(entry["url"])}">阅读全文<span class="link-arrow"></span></a></article>')
     source = re.sub(r'(<div id="articles"[^>]*>).*?(</div>)', lambda m: m[1] + ''.join(cards) + m[2], source, count=1, flags=re.S)
     years = ''.join(f'<option value="{html.escape(year, quote=True)}">{html.escape(year)}</option>' for year in sorted({entry["year"] for entry in entries}, reverse=True))
-    source = re.sub(r'(<select\b[^>]*\bid="year-filter"[^>]*>).*?(</select>)', lambda m: m[1] + '<option value="all">全部届次</option>' + years + m[2], source, count=1, flags=re.S)
+    source = re.sub(r'(<select\b[^>]*\bid="year-filter"[^>]*>).*?(</select>)', lambda m: m[1] + '<option value="all">全部年份</option>' + years + m[2], source, count=1, flags=re.S)
+    for name, default in (("campus", "全部校区"), ("degree", "全部学位")):
+        field = next(x for x in SCHEMA["fields"] if x["name"] == name)
+        available = {entry[name] for entry in entries}
+        options = ''.join(f'<option value="{html.escape(x["value"], quote=True)}">{html.escape(x["label"])}</option>' for x in field["options"] if name == "campus" or x["value"] in available)
+        source = re.sub(r'(<select\b[^>]*\bid="' + name + r'-filter"[^>]*>).*?(</select>)', lambda m: m[1] + '<option value="all">' + default + '</option>' + options + m[2], source, count=1, flags=re.S)
     count = ui('{count} 篇经历', count=len(entries)) + (ui(' · 含演示内容') if any(entry["demo"] for entry in entries) else '')
     return re.sub(r'(<p id="results-count"[^>]*>).*?(</p>)', lambda m: m[1] + count + m[2], source, count=1, flags=re.S)
 
@@ -154,14 +170,12 @@ def main():
             "category": meta["category"],
             "author": str(meta["author"]),
             "year": str(meta["year"]),
-            "college": str(meta.get("college", "")),
-            "major": str(meta.get("major", "")),
-            "program": str(meta.get("program", "")),
+            **{key: meta[key] for key in ("campus", "degree", "field", "published_at")},
             "destination": str(meta.get("destination", "")),
-            "excerpt": str(meta.get("excerpt") or re.sub(r"\s+", " ", re.sub(r"[#*_`]", "", body))[:150]),
-            "tags": meta.get("tags", []),
+            "excerpt": excerpt(body),
             "url": url,
         })
+    entries.sort(key=lambda entry: entry["published_at"], reverse=True)
     OUTPUT.mkdir(exist_ok=True)
     for old in OUTPUT.glob("*.html"):
         if old.name not in pages:

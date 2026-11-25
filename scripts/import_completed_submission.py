@@ -9,6 +9,10 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 
 import yaml
+try:
+    from scripts.submission_schema import validate_fields
+except ModuleNotFoundError:
+    from submission_schema import validate_fields
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = json.loads((ROOT / "data/schema.json").read_text(encoding="utf-8"))
@@ -21,22 +25,9 @@ ISSUE_PREFIX = "[飞跃手册投稿] "
 def validate_record(value):
     if not isinstance(value, dict) or value.get("version") != 1:
         raise ValueError("Unknown submission version")
-    if value.get("category") not in {x["id"] for x in SCHEMA["categories"]}:
-        raise ValueError("Invalid category")
-    allowed = {"version", "category"} | {x["name"] for x in SCHEMA["fields"]}
-    if set(value) != allowed:
+    if set(value) != {"version"} | {x["name"] for x in SCHEMA["fields"]}:
         raise ValueError("Unexpected or missing fields")
-    for field in SCHEMA["fields"]:
-        item = value[field["name"]]
-        if not isinstance(item, str) or re.search(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", item):
-            raise ValueError("Invalid field type")
-        if field.get("required") and not item.strip():
-            raise ValueError("Missing field")
-        if field.get("maxLength") and len(item.strip()) > field["maxLength"]:
-            raise ValueError("Oversized field")
-        if field.get("pattern") and item and not re.fullmatch(field["pattern"], item):
-            raise ValueError("Invalid field pattern")
-    return value
+    return dict(version=1, **validate_fields(value))
 
 
 def decode_issue(issue, private_key=None):
@@ -64,9 +55,7 @@ def decode_issue(issue, private_key=None):
     if len(raw) > 65536:
         raise ValueError("Submission record oversized")
     record = validate_record(json.loads(raw.decode("utf-8")))
-    title = record["author"] + " — " + record["destination"]
-    if record["program"]:
-        title += " · " + record["program"]
+    title = record["author"] + " · " + record["destination"]
     category_label = next(x["label"] for x in SCHEMA["categories"] if x["id"] == record["category"])
     expected_title = ISSUE_PREFIX + "[" + category_label + "] " + re.sub(r"\s+", " ", title)[:95]
     if issue["title"] != expected_title:
@@ -86,7 +75,8 @@ def import_event(event, root=ROOT, private_key=None):
     target = root / "content" / "community" / ("issue-" + str(issue["number"]) + ".md")
     if target.exists():
         return target, False
-    frontmatter = {name: record[name] for name in ("category", "author", "year", "college", "major", "destination", "program", "contact") if record[name]}
+    frontmatter = {name: record[name] for name in tuple(x["name"] for x in SCHEMA["fields"] if x["name"] != "body") if record[name]}
+    frontmatter["published_at"] = issue["closed_at"]
     frontmatter["source_issue"] = issue["number"]
     target.parent.mkdir(parents=True, exist_ok=True)
     content = "---\n" + yaml.safe_dump(frontmatter, allow_unicode=True, sort_keys=False) + "---\n" + record["body"].strip() + "\n"
