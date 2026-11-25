@@ -301,11 +301,12 @@
   const dialog = document.querySelector('#search-dialog');
   const search = document.querySelector('#search');
   const searchOpen = document.querySelector('.search-open');
+  if (!searchOpen) return;
   const searchDesktopParent = searchOpen.parentElement;
   const syncSearchPlacement = () => {
     if (mobile.matches) toggle.before(searchOpen);
     else if (archive) searchDesktopParent.append(searchOpen);
-    else sidebar.querySelector('.brand').after(searchOpen);
+    else searchDesktopParent.append(searchOpen);
   };
   syncSearchPlacement();
   mobile.addEventListener('change', syncSearchPlacement);

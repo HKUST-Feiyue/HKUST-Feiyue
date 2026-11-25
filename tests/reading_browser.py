@@ -36,6 +36,10 @@ def check_reading(playwright, base, articles):
                 assert page.locator('body').evaluate('el=>el.scrollWidth<=innerWidth')
                 for route in ('/community.html', '/submit.html', '/'+articles[0]['url']):
                     page.goto(base+route+'?lang='+lang,wait_until='networkidle')
+                    if route in ('/community.html','/submit.html'):
+                        assert page.locator('.search-open').count()==0
+                        continue
+                    assert page.locator('.sidebar .search-open').count()==0
                     page.locator('.search-open').click()
                     assert page.locator('.search-field').evaluate('el=>el.getBoundingClientRect().height<=47')
                     assert page.locator('#search').evaluate('el=>document.activeElement===el')

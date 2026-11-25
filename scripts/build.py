@@ -95,12 +95,6 @@ def shared_chrome(source, page, prefix="./", category=None):
     links.append(f'<a href="{prefix}community.html" class="nav-community"' + (' aria-current="page"' if page == "community" else '') + '>共建与联系 <span class="link-arrow" aria-hidden="true"></span></a>')
     sidebar = re.sub(r'(<nav class="nav"[^>]*>).*?(</nav>)', lambda m: m[1] + ''.join(links) + m[2], sidebar, flags=re.S)
     header = re.search(r'<header class="topbar"[^>]*>.*?</header>', home, re.S)[0]
-    if page != "index":
-        search_button = re.search(r'<button[^>]*class="search-open".*?</button>', home, re.S)[0].replace(' hidden', '')
-        header = header.replace('</header>', search_button + '</header>')
-        dialog = re.search(r'<dialog class="search-dialog".*?</dialog>', home, re.S)[0]
-        if 'id="search-dialog"' not in source:
-            source = source.replace('</body>', dialog + '</body>')
     footer = re.search(r'<footer class="site-footer".*?</footer>', home, re.S)[0]
     footer_links = f'<a href="{prefix}?view=all">全部经历</a>' + ''.join(
         f'<a href="{prefix}?category={quote(item["id"])}">{html.escape(item["label"])}</a>' for item in SCHEMA["categories"])
@@ -136,6 +130,8 @@ def render(meta, body, url):
     description = html.escape(excerpt(body), quote=True)
     source = re.sub(r'<meta name="description"[^>]*>', lambda _: f'<meta name="description" content="{description}" data-i18n-ignore>', source, count=1)
     content = f'<article class="article-page" data-pagefind-body><a class="article-back" href="../?category={quote(str(meta["category"]))}"><span class="link-arrow link-arrow-left" aria-hidden="true"></span> {ui("返回{category}", category=CATEGORIES[meta["category"]])}</a><h1 data-pagefind-meta="title" data-i18n-ignore>{title}</h1>{demo}<p class="article-byline" data-pagefind-meta="byline">{byline}</p><p class="article-field" data-i18n-ignore>{html.escape(meta["field"])}</p><time datetime="{html.escape(meta["published_at"], quote=True)}">{html.escape(meta["published_at"][:10])}</time>{toc}<div class="article-body">{clean}</div>{contact}</article>'
+    search_button = re.search(r'<button[^>]*class="search-open".*?</button>', source, re.S)[0].replace(' hidden', '')
+    content = content.replace('<h1 ', '<div class="article-tools">' + search_button + '</div><h1 ', 1)
     return re.sub(r'(<main[^>]*>).*?(</main>)', lambda m: m[1] + content + m[2], source, count=1, flags=re.S)
 
 

@@ -1042,6 +1042,7 @@ html:has(.search-dialog[open]) :is(main, .site-footer, .campus-banner) { visibil
 }
 
 .article-toc-side { display: none; }
+.article-tools { display: flex; justify-content: flex-end; margin: 8px 0; }
 .article-toc-side ul {
   --fade-top: 0px;
   --fade-bottom: 0px;
