@@ -27,10 +27,10 @@ def check_controls(playwright, base):
             page.locator('#preview-button').click()
             assert page.locator('#campus-trigger').get_attribute('aria-invalid') == 'true'
             assert page.locator('#campus-error').is_visible()
-            page.locator('#campus-trigger').focus()
+            page.locator('#campus-trigger').click()
             page.keyboard.press('End')
             page.keyboard.press('Enter')
-            assert page.locator('#campus').input_value() == 'gz'
+            assert page.locator('#campus').input_value() == 'gz', page.evaluate("({value:document.querySelector('#campus').value,focus:document.activeElement.id,expanded:document.querySelector('#campus-trigger').getAttribute('aria-expanded')})")
             page.locator('#degree-trigger').click()
             page.wait_for_function("document.querySelector('#degree-trigger').getAttribute('aria-expanded')==='true'")
             assert page.locator('#degree-options .select-group').count() == 4
