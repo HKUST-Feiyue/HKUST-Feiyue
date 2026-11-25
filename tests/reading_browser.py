@@ -13,6 +13,11 @@ def check_reading(playwright, base, articles):
                 page.goto(base+'/?view=all&lang='+lang,wait_until='networkidle')
                 assert page.locator('.article-item').count()==len(articles)
                 assert page.locator('.article-item-footer').count()==len(articles)
+                assert page.locator('.article-item-footer').first.evaluate("""el=>{
+                    const date=el.querySelector('time'),link=el.querySelector('a');
+                    const a=date.getBoundingClientRect(),b=link.getBoundingClientRect();
+                    return Math.abs(a.top-b.top)<1 && Math.abs(a.height-b.height)<1 && getComputedStyle(date).fontSize===getComputedStyle(link).fontSize;
+                }""")
                 if 360<=width<=900:
                     assert page.locator('.attribute-filters').evaluate("""el=>{
                         const campus=document.querySelector('#campus-trigger').getBoundingClientRect();

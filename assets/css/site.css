@@ -626,10 +626,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   align-items: center;
   flex-wrap: wrap;
   gap: 8px 16px;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .article-item-footer time {
   margin: 0;
+  color: var(--muted);
+  white-space: nowrap;
   font-variant-numeric: lining-nums tabular-nums;
 }
 
@@ -1174,7 +1178,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   color: var(--accent);
   font-weight: 650;
   font-size: 13px;
-  margin-top: 12px;
+  margin: 0;
+  line-height: inherit;
+  white-space: nowrap;
 }
 
 .article-toc .toc-depth-3 {
@@ -1312,7 +1318,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   color:var(--muted);
 }
 
-.article-item time,.article-page>time {
+.article-page>time {
   color:var(--muted);
   font-size:.85rem;
 }
