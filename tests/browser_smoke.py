@@ -144,10 +144,10 @@ def main():
                     brand = ".mobile-brand" if width <= 900 else ".sidebar .brand"
                     assert page.locator(brand).is_visible()
                     assert page.locator(brand + " img").evaluate(
-                        "el => el.complete && el.naturalWidth > 0 && el.getAttribute('width') === '498' && el.getAttribute('height') === '94' && getComputedStyle(el).maskImage === 'none'"
+                        "el => el.complete && el.naturalWidth > 0 && el.getAttribute('width') === '498' && el.getAttribute('height') === '94' && getComputedStyle(el).maskImage === 'none' && getComputedStyle(el).filter === 'none'"
                     )
                     assert page.locator(".footer-logo").evaluate(
-                        "el => getComputedStyle(el).backgroundColor === 'rgba(0, 0, 0, 0)' && getComputedStyle(el).paddingTop === '0px'"
+                        "el => getComputedStyle(el).backgroundColor === 'rgba(0, 0, 0, 0)' && getComputedStyle(el).paddingTop === '0px' && getComputedStyle(el).filter === 'none'"
                     )
                     if width > 900:
                         # The viewport-fixed desktop navigation stays independent of
@@ -579,7 +579,13 @@ def main():
             page.locator('#year-options [data-value="2020"]').click()
             assert page.locator('#empty-state').is_visible()
             page.locator('#category-nav [data-category="research"]').click()
-            assert page.locator('#degree-filter').input_value() == 'MBA'
+            assert page.locator('#degree-filter').input_value() == 'all'
+            for key,expected in (('campus',['all','gz']),('year',['all','2021']),('degree',['all','MPhil'])):
+                assert page.locator('#'+key+'-filter option').evaluate_all('(options)=>options.map(option=>option.value)') == expected
+                assert key+'=' not in page.url
+            page.locator('#year-trigger').click()
+            assert page.locator('#year-options [data-value]').count() == 2
+            page.locator('#year-trigger').click()
             page.locator('#reset-filters').click()
             assert 'category=research' in page.url and 'degree=' not in page.url
             assert page.locator('.article-item:visible').count() == 1

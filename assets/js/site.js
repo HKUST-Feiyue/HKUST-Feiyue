@@ -226,6 +226,7 @@
   if (!archive) return;
   const nav = document.querySelector('#category-nav');
   const attributes = ['campus', 'year', 'degree'].map(name => document.querySelector('#' + name + '-filter'));
+  const attributeOptions = new Map(attributes.map(control => [control, [...control.options].map(option => option.cloneNode(true))]));
   window.HKUSTSelect.enhance(archive);
 
   const cards = [...archive.querySelectorAll('.article-item')];
@@ -429,9 +430,23 @@
     document.querySelector('#stories-heading').textContent = current ? t('{category}经历', {category: current.dataset.categoryLabel}) : t('全部经历');
     document.querySelector('#category-intro').textContent = current ? t('{description}，阅读同学的经验分享。', {description: current.dataset.categoryDescription}) : t('按方向浏览同学分享的升学与职业经验。');
     for (const control of attributes) {
-      const value = params.get(control.id.replace('-filter', '')) || 'all';
+      const key = control.id.replace('-filter', '');
+      const available = new Set(cards.filter(card => activeCategory === 'all' || card.dataset.category === activeCategory).map(card => card.dataset[key]));
+      control.replaceChildren(...attributeOptions.get(control)
+        .filter(option => option.value === 'all' || available.has(option.value))
+        .map(option => {
+          const copy = option.cloneNode(true);
+          copy.textContent = t(copy.dataset.i18n || copy.textContent);
+          return copy;
+        }));
+      const value = params.get(key) || 'all';
       control.value = [...control.options].some(option => option.value === value) ? value : 'all';
+      if (control.value === 'all') params.delete(key);
+      control.dispatchEvent(new Event('optionschange'));
     }
+    const normalized = new URL(location.href);
+    normalized.search = params.toString();
+    if (normalized.href !== location.href) history.replaceState(null, '', normalized);
     attributes.forEach(control => control.dispatchEvent(new Event('selectsync')));
     renderFilters();
   };

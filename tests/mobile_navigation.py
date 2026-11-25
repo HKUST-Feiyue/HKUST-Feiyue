@@ -50,10 +50,10 @@ def main():
                         "document.querySelector('.topbar').getBoundingClientRect().bottom) <= 1"
                     )
                     assert page.locator(".mobile-brand-logo").evaluate(
-                        "el => el.complete && el.naturalWidth > 0 && el.getAttribute('width') === '498' && el.getAttribute('height') === '94' && getComputedStyle(el).maskImage === 'none'"
+                        "el => el.complete && el.naturalWidth > 0 && el.getAttribute('width') === '498' && el.getAttribute('height') === '94' && getComputedStyle(el).maskImage === 'none' && getComputedStyle(el).filter === 'none'"
                     )
                     assert page.locator(".footer-logo").evaluate(
-                        "el => getComputedStyle(el).backgroundColor === 'rgba(0, 0, 0, 0)' && getComputedStyle(el).paddingTop === '0px'"
+                        "el => getComputedStyle(el).backgroundColor === 'rgba(0, 0, 0, 0)' && getComputedStyle(el).paddingTop === '0px' && getComputedStyle(el).filter === 'none'"
                     )
                     page.evaluate("window.scrollTo({top:document.documentElement.scrollHeight,behavior:'instant'})")
                     page.wait_for_function("scrollY > 100")
