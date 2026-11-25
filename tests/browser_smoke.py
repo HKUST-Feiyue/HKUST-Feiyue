@@ -579,6 +579,7 @@ def main():
             page.locator('#year-options [data-value="2020"]').click()
             assert page.locator('#empty-state').is_visible()
             page.locator('#category-nav [data-category="research"]').click()
+            page.wait_for_function("document.querySelector('#degree-filter').value === 'all' && !location.search.includes('degree=')")
             assert page.locator('#degree-filter').input_value() == 'all'
             for key,expected in (('campus',['all','gz']),('year',['all','2021']),('degree',['all','MPhil'])):
                 assert page.locator('#'+key+'-filter option').evaluate_all('(options)=>options.map(option=>option.value)') == expected
