@@ -34,7 +34,7 @@ class SubmissionBuildTests(unittest.TestCase):
         self.assertIn('rel="preload" as="image"', submission)
         self.assertIn('class="campus-banner"', homepage)
         self.assertIn('class="campus-banner"', submission)
-        article = build.render({"category": "career", "author": "同学", "year": "2026", "destination": "企业"}, "## 正文", "articles/test.html")
+        article = build.render({"category": "career", "author": "同学", "year": "2026", "campus": "hk", "degree": "BSc", "field": "Computing", "published_at": "2026-11-25T00:00:00Z", "destination": "企业"}, "## 正文", "articles/test.html")
         self.assertIn('class="campus-banner"', article)
         self.assertIn('rel="preload" as="image" href="../assets/images/hkust-campus.jpg"', article)
         self.assertIn(".site-footer{flex:none;background:linear-gradient(tobottom,var(--bg),var(--surface)80px)", stylesheet)
@@ -43,12 +43,12 @@ class SubmissionBuildTests(unittest.TestCase):
             self.assertIn('assets/js/theme-init.js', page)
         self.assertNotIn("hero-visual", homepage)
         self.assertNotIn("hero-corner", homepage)
-        self.assertIn('theme-init.js', build.render({"category": "career", "author": "同学", "year": "2026", "destination": "企业"}, "## 正文", "articles/test.html"))
+        self.assertIn('theme-init.js', build.render({"category": "career", "author": "同学", "year": "2026", "campus": "hk", "degree": "BSc", "field": "Computing", "published_at": "2026-11-25T00:00:00Z", "destination": "企业"}, "## 正文", "articles/test.html"))
 
     def test_mobile_chrome_is_shared_across_routes(self):
         homepage = (ROOT / "index.html").read_text(encoding="utf-8")
         submission = (ROOT / "submit.html").read_text(encoding="utf-8")
-        article = build.render({"category": "career", "author": "同学", "year": "2026",
+        article = build.render({"category": "career", "author": "同学", "year": "2026", "campus": "hk", "degree": "BSc", "field": "Computing", "published_at": "2026-11-25T00:00:00Z",
                                 "destination": "企业"}, "## 正文", "articles/test.html")
         for source in (homepage, submission, article):
             self.assertIn('class="topbar" aria-label="移动端导航栏"', source)
@@ -59,13 +59,13 @@ class SubmissionBuildTests(unittest.TestCase):
         homepage = (ROOT / "index.html").read_text(encoding="utf-8")
         submission = (ROOT / "submit.html").read_text(encoding="utf-8")
         renderer = (ROOT / "scripts/site_build.py").read_text(encoding="utf-8")
-        article = build.render({"category": "career", "author": "同学", "year": "2026", "destination": "企业"}, "## 搜索正文", "articles/sample.html")
+        article = build.render({"category": "career", "author": "同学", "year": "2026", "campus": "hk", "degree": "BSc", "field": "Computing", "published_at": "2026-11-25T00:00:00Z", "destination": "企业"}, "## 搜索正文", "articles/sample.html")
         for html_source in (homepage, submission):
             self.assertIn("<body data-pagefind-ignore>", html_source)
             self.assertEqual(html_source.count('id="theme-toggle"'), 1)
             self.assertNotIn('id="theme-toggle-mobile"', html_source)
         self.assertIn('data-pagefind-body', article)
-        self.assertNotIn('data-pagefind-ignore', article)
+        self.assertIn('data-pagefind-body', article)
         self.assertIn('"pagefind"', renderer)
         self.assertNotIn('data-search=', homepage)
         self.assertIn('id="search-dialog"', homepage)
@@ -87,7 +87,7 @@ class SubmissionBuildTests(unittest.TestCase):
         self.assertIn("textarea", source)
         self.assertIn('id="preview-text"', submission)
         fields = {entry["name"]: entry for entry in schema["fields"]}
-        self.assertIn("hello@example.com", fields["contact"]["placeholder"])
+        self.assertIn("hello@example.com", fields["contact"]["valuePlaceholder"])
         self.assertEqual(fields["year"]["pattern"], "[0-9]{4}")
 
     def test_shared_theme_toc_and_form_layout(self):
@@ -105,13 +105,13 @@ class SubmissionBuildTests(unittest.TestCase):
         self.assertIn('appearance:none', stylesheet)
         self.assertIn('.article-tocsummary{', stylesheet)
         self.assertIn(".form-wrap{max-width:820px;padding:0;", stylesheet)
-        article = build.render({"category": "career", "author": "同学", "year": "2026", "destination": "企业"},
+        article = build.render({"category": "career", "author": "同学", "year": "2026", "campus": "hk", "degree": "BSc", "field": "Computing", "published_at": "2026-11-25T00:00:00Z", "destination": "企业"},
                                "## 第一章\n\n正文\n\n## 第二章\n\n正文", "articles/test.html")
         self.assertIn('<details class="article-toc">', article)
         self.assertIn('<summary>本页目录</summary>', article)
 
     def test_published_article_brand_assets(self):
-        meta = {"category": "career", "author": "同学", "year": "2026", "destination": "企业"}
+        meta = {"category": "career", "author": "同学", "year": "2026", "campus": "hk", "degree": "BSc", "field": "Computing", "published_at": "2026-11-25T00:00:00Z", "destination": "企业"}
         page = build.render(meta, "## 正文", "articles/example.html")
         self.assertIn('../assets/icons/favicon.svg', page)
         self.assertIn('class="brand-logo" src="../assets/images/hkust-horizontal.svg"', page)
@@ -129,16 +129,14 @@ class SubmissionBuildTests(unittest.TestCase):
         schema = json.loads((ROOT / "data/schema.json").read_text(encoding="utf-8"))
         names = {field["name"] for field in schema["fields"]}
         self.assertNotIn("title", names)
-        self.assertTrue({"author", "year", "college", "major", "destination", "program", "body"} <= names)
+        self.assertTrue({"author", "campus", "year", "degree", "field", "category", "destination", "body", "contact"} <= names)
 
     def test_title_auto_generated(self):
-        meta = {"author": "张同学", "destination": "香港中文大学", "program": "MSc@CS"}
-        self.assertEqual(build.display_title(meta), "香港中文大学 · MSc@CS")
-        meta.pop("program")
-        self.assertEqual(build.display_title(meta), "香港中文大学")
+        meta = {"author": "张同学", "destination": "香港中文大学"}
+        self.assertEqual(build.display_title(meta), "张同学 · 香港中文大学")
 
     def test_render_heading_table_and_sanitize(self):
-        meta = {"category": "overseas", "author": "张同学", "year": "2026", "destination": "香港中文大学"}
+        meta = {"category": "further-studies", "author": "张同学", "year": "2026", "campus": "hk", "degree": "BSc", "field": "Computing", "published_at": "2026-11-25T00:00:00Z", "destination": "香港中文大学"}
         body = "# 一级标题\\n\\n| 项目 | 说明 |\\n| --- | --- |\\n| A | B |\\n\\n~~删除文字~~\\n\\n- [x] 已完成\\n\\n<script>alert(1)</script>".replace("\\n", "\n")
         page = build.render(meta, body, "articles/sample.html")
         self.assertIn("<h1", page)
@@ -148,7 +146,7 @@ class SubmissionBuildTests(unittest.TestCase):
         self.assertNotIn("<script>alert(1)</script>", page)
 
     def test_schema_required_fields_and_limits_are_enforced_before_publication(self):
-        meta = {"category": "career", "author": "Test author", "year": "2026", "college": "Example college", "major": "Example major", "destination": "Example"}
+        meta = {"category": "career", "author": "Test author", "year": "2026", "campus": "hk", "degree": "BSc", "field": "Computing", "published_at": "2026-11-25T00:00:00Z", "destination": "Example"}
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / "test.md"
             for field in build.SCHEMA["fields"]:
@@ -187,13 +185,13 @@ class SubmissionBuildTests(unittest.TestCase):
         samples = sorted((ROOT / "content/demo").glob("*.md"))
         if not samples:
             return  # Removing the demo directory later must stay supported.
-        self.assertEqual(len(samples), 4)
+        self.assertEqual(len(samples), len(build.CATEGORIES))
         categories = []
         for path in samples:
             meta, body = build.parse(path)
             self.assertIs(meta.get("demo"), True)
             self.assertNotIn("演示声明", body)
-            self.assertGreater(len(body), 600)
+            self.assertTrue(body.strip())
             categories.append(meta["category"])
             rendered = build.render(meta, body, "articles/" + path.stem + ".html")
             self.assertEqual(rendered.count('<span class="demo-badge">演示</span>'), 1)

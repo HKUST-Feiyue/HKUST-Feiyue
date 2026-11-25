@@ -4,28 +4,29 @@
 
 ```yaml
 ---
-category: kaoyan
 author: 昵称
-year: "2026"
-college: 学院
-major: 专业
-destination: 最终去向
-program: 专业、项目或岗位（可选）
-contact: 邮箱或社交账号（可选，公开展示）
-excerpt: 一句话摘要（可选）
-tags:
-  - 复试
+campus: hk
+year: "2022"
+degree: BSc
+field: Computer Science
+category: further-studies
+destination: 示例项目
+contact:
+  - type: Email
+    value: hello@example.com
+published_at: '2026-11-25T00:00:00Z'
 ---
-这里写正文。
+这里写 Markdown 正文。
 ```
 
-`category` 必须是 `data/schema.json` 中定义的分类之一。不要提交未经当事人许可的个人信息。文章标题自动使用「去向 · 专业/项目/岗位」生成，署名另显示「昵称 · 毕业届次 · 学院 · 专业」，无须单独填写标题；正文从 Markdown 文件本体读取。文章中不接受直接嵌入的 HTML。
+业务字段和枚举以 `data/schema.json` 为准。只有联系方式选填：类型和值均自由填写，双空忽略、单空拒绝。`year` 必须是四位入学年份字符串，不能由毕业年份推算。联系方式公开显示于详情页，排除站内搜索和文章索引。
+标题由「author · destination」生成；背景显示「campus · year · degree」，专业/研究方向单列。摘要从正文提取。`published_at` 为系统记录的首次审核发布时间，`source_issue` 为原投稿编号；无需投稿者填写。不要提交未经许可的个人信息，不接受可执行 HTML。
 
 ## 演示文章
 
 演示文章使用 `demo: true`，统一存放在 `content/demo/`。真实投稿增加后可以直接删除此目录，构建会自动清理对应页面与索引。演示不代表真实经历。
 
-演示库固定四篇，每个方向一篇完整的虚构示例。前台只显示简洁的「演示」标识，不暗示文章为真人投稿；删除 `content/demo/` 即可全部移除。
+演示库覆盖五个方向，每个方向一篇虚构示例。前台只显示简洁的「演示」标识，不暗示文章为真人投稿；删除 `content/demo/` 即可全部移除。
 
 投稿表单的 `data/demo-submission.md` 是独立的纯正文写作示例。
 

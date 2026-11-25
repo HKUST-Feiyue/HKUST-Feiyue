@@ -94,14 +94,32 @@ function validate(payload) {
     return null;
   if (typeof payload.turnstileToken !== 'string' ||
       payload.turnstileToken.length < 1 || payload.turnstileToken.length > 2048) return null;
-  const record = { version: 1, category: payload.category };
+  const allowed = new Set(['version', 'turnstileToken', ...schema.fields.map(field => field.name)]);
+  if (Object.keys(payload).some(key => !allowed.has(key))) return null;
+  const record = { version: 1 };
   for (const field of schema.fields) {
-    const value = payload[field.name] ?? '';
+    const value = Object.hasOwn(payload, field.name) ? payload[field.name] : (field.name === 'contact' ? [] : '');
+    if (field.name === 'contact') {
+      if (!Array.isArray(value) || value.length > field.maxItems) return null;
+      const contacts = [];
+      for (const row of value) {
+        if (!row || typeof row !== 'object' || Array.isArray(row) || Object.keys(row).sort().join(',') !== 'type,value') return null;
+        if (typeof row.type !== 'string' || typeof row.value !== 'string' || CONTROL.test(row.type + row.value)) return null;
+        const clean = { type: row.type.trim(), value: row.value.trim() };
+        if ([...clean.type].length > field.typeMaxLength || [...clean.value].length > field.valueMaxLength) return null;
+        if (!clean.type && !clean.value) continue;
+        if (!clean.type || !clean.value) return null;
+        contacts.push(clean);
+      }
+      record.contact = contacts;
+      continue;
+    }
     if (typeof value !== 'string' || CONTROL.test(value)) return null;
     const clean = value.trim();
     if (field.required && !clean) return null;
-    if (field.maxLength && clean.length > field.maxLength) return null;
+    if (field.maxLength && [...clean].length > field.maxLength) return null;
     if (field.pattern && clean && !(new RegExp('^(?:' + field.pattern + ')$')).test(clean)) return null;
+    if (field.options && !field.options.some(option => option.value === clean)) return null;
     record[field.name] = clean;
   }
   return record;
@@ -118,21 +136,12 @@ const quote = value => value.split(/\r?\n/).map(line => '> ' + line.replace(/</g
 async function issueFor(record, key) {
   const category = schema.categories.find(item => item.id === record.category);
   const title = '[飞跃手册投稿] [' + category.label + '] ' +
-    (record.author + ' — ' + record.destination + (record.program ? ' · ' + record.program : ''))
-      .replace(/\s+/g, ' ').slice(0, 95);
-  const lines = [
-    '**方向：** ' + category.label,
-    '**作者：** ' + record.author,
-    '**毕业届次：** ' + record.year,
-    '**学院：** ' + record.college,
-    '**专业：** ' + record.major,
-    '**去向单位：** ' + record.destination,
-    '**专业 / 项目 / 岗位：** ' + (record.program || '未填写'), '',
-    '### 经历正文', quote(record.body), '',
-    '### 联系方式', record.contact ? quote(record.contact) : '> 未填写', '',
-    '---', '',
-    '**已分配至：** @HKUST-Feiyue/' + category.reviewTeam
-  ];
+    [...(record.author + ' · ' + record.destination).replace(/\s+/g, ' ')].slice(0, 95).join('');
+  const lines = schema.fields.filter(field => field.name !== 'body' && field.name !== 'contact')
+    .map(field => '**' + field.label + '：** ' + quote(record[field.name]));
+  lines.push('', '### 经历正文', quote(record.body), '', '### 联系方式',
+    record.contact.length ? record.contact.map(row => quote(row.type + '：' + row.value)).join('\n') : '> 未填写',
+    '', '---', '', '**已分配至：** @HKUST-Feiyue/' + category.reviewTeam);
   const encoded = base64url(record);
   const signature = appBase64Url(new Uint8Array(await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key,
     new TextEncoder().encode(SIGNING_CONTEXT + encoded))));

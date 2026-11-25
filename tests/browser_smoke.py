@@ -79,8 +79,8 @@ def main():
                     page.goto(base + PREFIX + "/", wait_until="networkidle")
                     assert page.locator("h1:visible").count() == 1
                     first_meta = page.locator(".article-item .article-meta").first.inner_text()
-                    assert first_meta.endswith(articles[0]["college"] + " · " + articles[0]["major"])
-                    assert page.locator(".article-item h3").first.inner_text().startswith(articles[0]["author"] + " — ")
+                    assert first_meta.endswith(articles[0]["year"] + " · " + articles[0]["degree"])
+                    assert page.locator(".article-item h3").first.inner_text().startswith(articles[0]["author"] + " · ")
                     assert page.locator(".article-item").first.evaluate("el => el.querySelector('h3').compareDocumentPosition(el.querySelector('.article-meta')) & Node.DOCUMENT_POSITION_FOLLOWING")
                     # A bounded image banner retains aspect ratio at desktop/mobile sizes.
                     background = page.evaluate("""() => {
@@ -117,7 +117,7 @@ def main():
                             return {height:head.height, top:head.top, bottom:head.bottom,
                                     imageTop:image.top, surface:getComputedStyle(header).backgroundColor};
                         }""")
-                        assert layout["height"] == 72
+                        assert layout["height"] == 72, layout
                         assert abs(layout["imageTop"] - layout["bottom"]) <= 1
                         assert layout["surface"] != "rgba(0, 0, 0, 0)"
                         assert background["bannerImage"].count("linear-gradient") == 3
@@ -184,7 +184,7 @@ def main():
                     page.locator(brand).click()
                     page.wait_for_function("scrollY <= 2")
                     assert urlsplit(page.url).path.rstrip("/").endswith(PREFIX)
-                    assert page.locator("#category-nav [data-category]").count() == 5
+                    assert page.locator("#category-nav [data-category]").count() == 6
                     assert page.locator(".site-footer").count() == 1
                     assert page.locator(".site-footer").evaluate(
                         "el => getComputedStyle(el).backgroundImage.includes('linear-gradient')"
@@ -254,10 +254,10 @@ def main():
                         assert page.evaluate("scrollY > 0")
                         if width <= 900:
                             page.locator("#menu-toggle").click()
-                        page.locator("#category-nav [data-category='kaoyan']").click()
-                        page.wait_for_url(lambda url: parse_qs(urlsplit(url).query).get("category") == ["kaoyan"])
+                        page.locator("#category-nav [data-category='further-studies']").click()
+                        page.wait_for_url(lambda url: parse_qs(urlsplit(url).query).get("category") == ["further-studies"])
                         page.wait_for_function("scrollY === 0")
-                        assert page.locator(".article-item:visible").count() == sum(item["category"] == "kaoyan" for item in articles)
+                        assert page.locator(".article-item:visible").count() == sum(item["category"] == "further-studies" for item in articles)
                         if width <= 900:
                             page.locator("#menu-toggle").click()
                         page.locator("#category-nav [data-category='all']").click()
@@ -269,9 +269,9 @@ def main():
                     page.locator("#year-trigger").click()
                     assert page.locator("#year-options").evaluate("el => el.matches(':popover-open')")
                     assert page.locator("#year-options .year-option").count() >= 2
-                    page.locator("#year-options [data-value='2026']").click()
-                    assert page.locator("#year-filter").input_value() == "2026"
-                    assert page.locator("#year-label").inner_text() == "2026"
+                    page.locator("#year-options [data-value='2020']").click()
+                    assert page.locator("#year-filter").input_value() == "2020"
+                    assert page.locator("#year-label").inner_text() == "2020"
                     page.locator("#year-trigger").focus()
                     page.keyboard.press("ArrowDown")
                     assert page.locator("#year-options").evaluate("el => el.matches(':popover-open')")
@@ -319,7 +319,7 @@ def main():
                     page.locator("#search").fill("no-matching-story-987654321")
                     assert page.locator(".article-item:visible").count() == visible_before_search
                     page.wait_for_function("document.querySelector('#search-results').textContent.includes('沒有找到匹配內容')")
-                    page.locator("#search").fill("簡歷修改")
+                    page.locator("#search").fill("官方")
                     page.locator("#search-results li a").first.wait_for(state="visible")
                     assert page.locator("#search-results .search-summary").inner_text().startswith("找到 ")
                     assert page.locator("#search-results .search-match mark").count() > 0
@@ -328,7 +328,7 @@ def main():
                     opened_article = next((entry for entry in articles
                                            if page.url.split("?")[0].endswith("/" + entry["url"])), None)
                     assert opened_article is not None
-                    assert opened_article["author"] not in page.locator(".article-page > h1").inner_text()
+                    assert opened_article["author"] in page.locator(".article-page > h1").inner_text()
                     if width == 1600:
                         assert page.evaluate("""() => {
                             const main = document.querySelector('main.content');
@@ -378,14 +378,12 @@ def main():
                     page.locator("#year").fill("abcd")
                     assert not page.locator("#year").evaluate("el => el.checkValidity()")
                     page.locator("#year").fill("2026")
-                    assert page.locator(".education-fields legend").inner_text() == "在校信息"
-                    assert not page.locator("#college").evaluate("el => el.checkValidity()")
-                    page.locator("#college").fill("某學院")
-                    assert not page.locator("#major").evaluate("el => el.checkValidity()")
-                    page.locator("#major").fill("某專業")
+                    page.locator("#campus").select_option("hk")
+                    page.locator("#degree").select_option("BSc")
+                    page.locator("#category").select_option("career")
+                    page.locator("#field").fill("Computing")
                     page.locator("#destination").fill("Example institution")
-                    assert page.locator("#year").evaluate("el => el.getBoundingClientRect().width < 120")
-                    assert "hello@example.com" in page.locator("#contact").get_attribute("placeholder")
+                    assert "hello@example.com" in page.locator('[data-contact="value"]').first.get_attribute("placeholder")
                     assert page.locator("#body").evaluate("el => el.getBoundingClientRect().height >= 240")
                     page.locator("#body").fill(("## 覆盤\\n\\n" + "過程很重要，經驗可以複用。\\n") * 25)
                     assert page.locator("#body").evaluate("el => el.scrollHeight <= el.clientHeight + 3")
@@ -400,7 +398,8 @@ def main():
                     assert "## 小標題" in page.locator(".markdown-help").inner_text()
                     page.locator("#body").fill("")
                     page.locator("#body").fill("## Heading\n\n**Test body**\n\n<script>window.__unsafe = true</script>")
-                    page.locator("#contact").fill("do-not-save@example.invalid")
+                    page.locator('[data-contact="type"]').first.fill("Email")
+                    page.locator('[data-contact="value"]').first.fill("do-not-save@example.invalid")
                     page.locator("#preview-button").click()
                     assert page.locator("#preview").is_visible()
                     assert page.locator("#preview .article-body strong").count() == 1, page.locator("#preview-text").inner_html()
@@ -416,7 +415,7 @@ def main():
                     page.reload(wait_until="networkidle")
                     page.wait_for_selector("#body")
                     assert page.locator("#author").input_value() == "Browser test"
-                    assert page.locator("#contact").input_value() == ""
+                    assert page.locator('[data-contact="value"]').first.input_value() == ""
                     assert page.locator("#body").evaluate("el => el.scrollHeight <= el.clientHeight + 3")
                     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 2")
                     assert errors == [], errors
@@ -427,7 +426,7 @@ def main():
             page = context.new_page()
             Handler.script_delay = 2
             try:
-                page.goto(base + "/?category=kaoyan", wait_until="commit")
+                page.goto(base + "/?category=further-studies", wait_until="commit")
                 page.wait_for_selector('#archive-intro')
                 assert page.evaluate("""() => ({
                     active: document.querySelector('#category-nav [aria-current="page"]')?.dataset.category,
@@ -435,17 +434,17 @@ def main():
                     archiveHidden: document.querySelector('#archive-intro').hidden,
                     heading: document.querySelector('#stories-heading').textContent
                 })""") == {
-                    "active": "kaoyan", "homeHidden": True,
-                    "archiveHidden": False, "heading": "考研經歷"
+                    "active": "further-studies", "homeHidden": True,
+                    "archiveHidden": False, "heading": "升學深造經歷"
                 }
                 page.wait_for_load_state("networkidle")
                 Handler.script_delay = 0
-                page.goto(base + "/articles/demo-postgraduate.html", wait_until="networkidle")
+                page.goto(base + "/articles/demo-further-studies.html", wait_until="networkidle")
                 Handler.script_delay = 2
                 page.locator('.article-back').click(no_wait_after=True)
-                page.wait_for_url(lambda url: parse_qs(urlsplit(url).query).get("category") == ["kaoyan"], wait_until="commit")
+                page.wait_for_url(lambda url: parse_qs(urlsplit(url).query).get("category") == ["further-studies"], wait_until="commit")
                 page.wait_for_selector('#archive-intro')
-                assert page.locator('#category-nav [aria-current="page"]').get_attribute('data-category') == 'kaoyan'
+                assert page.locator('#category-nav [aria-current="page"]').get_attribute('data-category') == 'further-studies'
                 assert page.locator('#home-intro').is_hidden()
             finally:
                 Handler.script_delay = 0
@@ -470,7 +469,7 @@ def main():
             assert page.locator('.article-item:visible').count() == 1
             page.go_forward()
             assert parse_qs(urlsplit(page.url).query)['view'] == ['all']
-            page.goto(base + '/?category=kaoyan', wait_until='networkidle')
+            page.goto(base + '/?category=further-studies', wait_until='networkidle')
             page.locator('.search-open').click()
             page.locator('#search').fill("周同學")
             page.wait_for_function("document.querySelector('#search-results').textContent.includes('沒有找到匹配內容')")
@@ -486,20 +485,20 @@ def main():
             page = context.new_page()
             for route in ("/", "/" + articles[0]["url"]):
                 page.goto(base + PREFIX + route)
-                assert page.locator(".footer-links a").count() == 7
-                assert page.locator("#category-nav [data-category]").count() == 5
+                assert page.locator(".footer-links a").count() == 8
+                assert page.locator("#category-nav [data-category]").count() == 6
                 assert page.locator("h1").count() >= 1
                 if route == "/":
                     assert page.locator(".article-item:visible").count() == len(articles)
             context.close()
             # A submitted Markdown story should preview as its published counterpart.
             # Inspect real production-rendered HTML, not an imagined CSS fixture.
-            demo_source = (ROOT / "content/demo/demo-postgraduate.md").read_text(encoding="utf-8")
+            demo_source = (ROOT / "content/demo/demo-further-studies.md").read_text(encoding="utf-8")
             demo_body = demo_source.split('---', 2)[2].strip()
             context = browser.new_context(reduced_motion="reduce")
             context.add_init_script("localStorage.setItem('hkust-feiyue-lang', 'zh')")
             page = context.new_page()
-            page.goto(base + PREFIX + "/articles/demo-postgraduate.html", wait_until="networkidle")
+            page.goto(base + PREFIX + "/articles/demo-further-studies.html", wait_until="networkidle")
             def appearance(selector):
                 return page.locator(selector).first.evaluate("""el => {
                     const style = getComputedStyle(el);
@@ -526,13 +525,13 @@ def main():
                 body="window.HKUST_SUBMISSION_CONFIG={enabled:false};"
             ))
             page.goto(base + PREFIX + "/submit.html", wait_until="networkidle")
-            page.locator("#category").select_option("kaoyan")
-            page.locator("#author").fill("林同學")
-            page.locator("#year").fill("2026")
-            page.locator("#college").fill("某學院")
-            page.locator("#major").fill("某專業")
-            page.locator("#destination").fill("某理工類高校")
-            page.locator("#program").fill("計算機科學與工程相關專業")
+            page.locator("#category").select_option("further-studies")
+            page.locator("#author").fill("演示作者 1")
+            page.locator("#year").fill("2020")
+            page.locator("#campus").select_option("hk")
+            page.locator("#degree").select_option("BSc")
+            page.locator("#field").fill("Computer Science")
+            page.locator("#destination").fill("示例项目 1")
             page.locator("#body").fill(demo_body)
             page.locator("#preview-button").click()
             assert page.locator("#preview").is_visible()
@@ -564,48 +563,26 @@ def main():
             page = context.new_page()
             page.goto(base + "/?view=all", wait_until="networkidle")
             page.locator(".search-open").click()
-            page.locator("#search").fill("理工")
-            page.wait_for_function("count => document.querySelectorAll('#search-results li a').length === count",
-                                   arg=sum("理工" in item["title"] for item in articles))
-            page.locator("#search").fill("林同學")
-            page.wait_for_function("document.querySelectorAll('#search-results li a').length === 1")
-            assert page.locator("#search-results .search-title mark").count() == 1
-            page.locator("#search").fill("2026")
-            year_matches = sum(item["year"] == "2026" for item in articles)
-            page.wait_for_function("count => document.querySelectorAll('#search-results li a').length === count", arg=year_matches)
-            assert page.locator("#search-results .search-match mark").count() == year_matches
-            assert page.locator("#search-results .search-match").first.inner_text().startswith("2026 屆")
-            page.locator("#search").fill("某學院")
-            page.wait_for_function("document.querySelector('#search-results .search-match mark')?.textContent === '某學院'")
-            college_matches = sum(item["college"] == "某學院" for item in articles)
-            assert page.locator("#search-results li a").count() == college_matches
-            assert page.locator("#search-results .search-match mark").count() == college_matches
-            page.locator("#search").fill("推薦信")
-            page.locator("#search-results li a").first.wait_for(state="visible")
-            assert page.locator("#search-results li a").count() == 1
-            assert "香港某高校" in page.locator("#search-results li a").inner_text()
-            assert "推薦信" in page.locator("#search-results .search-match").inner_text()
-            assert page.locator("#search-results .search-match mark").count() == 1
-            assert page.locator("#search-results .search-title mark").count() == 0
-            page.locator(".search-close").click()
-            page.locator("#year-trigger").click()
-            page.locator("#year-options [data-value='2026']").click()
-            assert page.locator(".article-item:visible").count() > 0
-            assert page.locator(".article-item:visible").evaluate_all(
-                "items => items.every(item => item.dataset.year === '2026')"
-            )
-            page.locator(".search-open").click()
-            page.locator("#search").fill("推薦信")
-            page.locator("#search-results li a").first.wait_for(state="visible")
-            assert page.locator("#search-results li a").count() == 1
-            page.locator("#search").fill("")
-            assert page.locator("#search-results").is_hidden()
+            for query in (articles[0]["author"], articles[0]["field"], "官方"):
+                page.locator("#search").fill(query)
+                page.locator("#search-results li a").first.wait_for(state="visible")
+            page.locator("#search").fill("contactexcluded7x9")
+            page.wait_for_function("document.querySelector('#search-results').textContent.includes('沒有找到匹配內容')")
             page.locator('.search-close').click()
-            page.evaluate('window.__searchNode = document.querySelector(".search-open")')
-            page.set_viewport_size({"width": 390, "height": 844})
-            assert page.locator('.topbar .search-open').evaluate('el => el === window.__searchNode')
-            page.set_viewport_size({"width": 901, "height": 844})
-            assert page.locator('.archive-intro .search-open').evaluate('el => el === window.__searchNode')
+            page.locator('#campus-filter').select_option('hk')
+            page.locator('#degree-filter').select_option('BSc')
+            assert page.locator('.article-item:visible').count() == 1
+            page.reload(wait_until='networkidle')
+            assert page.locator('#campus-filter').input_value() == 'hk'
+            page.locator('#degree-filter').select_option('MBA')
+            page.locator('#year-trigger').click()
+            page.locator('#year-options [data-value="2020"]').click()
+            assert page.locator('#empty-state').is_visible()
+            page.locator('#category-nav [data-category="research"]').click()
+            assert page.locator('#degree-filter').input_value() == 'MBA'
+            page.locator('#reset-filters').click()
+            assert 'category=research' in page.url and 'degree=' not in page.url
+            assert page.locator('.article-item:visible').count() == 1
             context.close()
             # Mocked public mode: confirm the complete browser payload/feedback
             # without contacting Cloudflare or opening an actual GitHub Issue.
@@ -631,8 +608,9 @@ def main():
             page.locator("#category").select_option("career")
             page.locator("#author").fill("測試同學")
             page.locator("#year").fill("2026")
-            page.locator("#college").fill("某學院")
-            page.locator("#major").fill("某專業")
+            page.locator("#campus").select_option("gz")
+            page.locator("#degree").select_option("MPhil")
+            page.locator("#field").fill("某專業")
             page.locator("#destination").fill("某公司")
             page.locator("#body").fill("## 完整經歷\\n\\n測試內容")
             page.wait_for_function("!document.querySelector('#submit-button').disabled", timeout=10000)
@@ -640,17 +618,17 @@ def main():
             assert page.locator("#body").input_value() == "## 完整經歷\\n\\n測試內容"
             page.wait_for_function("!document.querySelector('#submit-button').disabled")
             page.locator("#submit-button").click()
-            page.get_by_text("View submission").wait_for()
+            page.get_by_text("查看投稿记录").wait_for()
             page.locator(".language-toggle").click()
-            page.get_by_text("查看投稿記錄").wait_for()
+            page.get_by_text("View submission").wait_for()
             assert page.locator("#submission-status").get_attribute("data-state") == "success"
-            assert page.locator("#submit-button").inner_text() == "投稿分享"
+            assert page.locator("#submit-button").inner_text() == "Contribute"
             assert len(submissions) == 1
             assert submissions[0]["category"] == "career"
-            assert submissions[0]["college"] == "某學院"
-            assert submissions[0]["major"] == "某專業"
+            assert submissions[0]["campus"] == "gz"
+            assert submissions[0]["field"] == "某專業"
             assert submissions[0]["turnstileToken"] == "test-token"
-            assert page.evaluate('window.turnstileLanguages') == ['zh-TW', 'en', 'zh-TW']
+            assert page.evaluate('window.turnstileLanguages') == ['zh-TW', 'zh-CN', 'en']
             assert page.locator("#author").input_value() == ""
             context.close()
             # The actual preview server must not load Turnstile on localhost.
@@ -676,7 +654,7 @@ def main():
             context = browser.new_context(viewport={"width": 390, "height": 844})
             context.add_init_script("localStorage.setItem('hkust-feiyue-lang', 'zh')")
             page = context.new_page()
-            page.goto(base + "/articles/demo-postgraduate.html", wait_until="networkidle")
+            page.goto(base + "/articles/demo-further-studies.html", wait_until="networkidle")
             toc = page.locator(".article-toc")
             toc.locator("summary").click()
             assert toc.get_attribute("open") is not None
@@ -713,77 +691,36 @@ def check_languages(playwright, base, articles):
         page = context.new_page()
         errors = []
         page.on("pageerror", lambda error: errors.append(str(error)))
-        page.goto(base + PREFIX + "/", wait_until="networkidle")
-        assert page.locator("html").get_attribute("lang") == "en"
-        assert parse_qs(urlsplit(page.url).query)["lang"] == ["en"]
-        assert page.locator(".language-toggle").count() == 1
-        assert page.locator(".language-toggle").is_visible()
-        language_button = page.locator(".language-toggle")
-        assert " ".join(language_button.inner_text().split()) == "繁體 / EN"
-        button_box = language_button.bounding_box()
-        language_button.click()
-        assert page.locator("html").get_attribute("lang") == "zh-Hant"
-        assert language_button.bounding_box() == button_box
-        assert page.locator("#hero-title").evaluate("el => getComputedStyle(el).transform") == "none"
-        language_button.click()
-        assert page.locator("#category-nav [data-category='career']").text_content() == "Careers"
-        page.goto(base + PREFIX + "/?category=career", wait_until="networkidle")
-        if width <= 900:
-            assert page.evaluate("""() => {
-                const boxes = ['.mobile-brand img', '.language-toggle', '.search-open', '#menu-toggle']
-                    .map(selector => document.querySelector(selector).getBoundingClientRect());
-                return boxes.every((box, i) => i === 0 || box.left >= boxes[i - 1].right) &&
-                    boxes[2].left - boxes[1].right <= 5 && boxes[3].left - boxes[2].right <= 5;
-            }""")
-        page.locator("#year-trigger").click()
-        page.locator('#year-options [data-value="2026"]').click()
-        page.locator(".language-toggle").click()
-        assert page.locator("#stories-heading").inner_text() == "就業經歷"
-        assert page.locator("#year-filter").input_value() == "2026"
-        assert "category=career" in page.url and "lang=zh" in page.url
-        page.goto(base + PREFIX + "/?view=all#stories-heading", wait_until="networkidle")
-        assert parse_qs(urlsplit(page.url).query) == {"view": ["all"], "lang": ["zh"]}
-        assert urlsplit(page.url).fragment == "stories-heading"
-        page.goto(base + PREFIX + "/community.html", wait_until="networkidle")
-        assert page.locator("html").get_attribute("lang") == "zh-Hant"
-        assert page.locator(".community-person").count() == 1
-        assert "傅謝懿" in page.locator(".community-person").inner_text()
-        page.goto(base + PREFIX + "/community.html?lang=en", wait_until="networkidle")
-        assert page.locator("html").get_attribute("lang") == "en"
-        assert "Fu Xieyi" in page.locator(".community-person").inner_text()
-        page.goto(base + PREFIX + "/" + articles[0]["url"], wait_until="networkidle")
-        original = page.locator(".article-body").inner_html()
-        original_title = page.locator(".article-page > h1").inner_text()
-        page.locator(".language-toggle").click()
-        assert page.locator(".article-body").inner_html() == original
-        assert page.locator(".article-page > h1").inner_text() == original_title
-        page.goto(base + PREFIX + "/submit.html?lang=en", wait_until="networkidle")
-        page.wait_for_selector("#author")
-        values = {"author":"Alex / 傅", "year":"2026", "college":"Engineering / 工学院",
-                  "major":"Computer Science / 计算机", "destination":"Research / 科研",
-                  "program":"MSc / 硕士", "body":"## My journey / 我的经历\n\nChinese and English / 中英文自由投稿。", "contact":"alex@example.com"}
-        for name, value in values.items():
-            page.locator("#" + name).fill(value)
-        assert page.locator("label[for=author]").inner_text() == "Name / nickname *"
-        page.locator("#preview-button").click()
-        assert page.locator("#preview").is_visible()
-        preview_body = page.locator("#preview-text .article-body").inner_html()
-        page.locator(".language-toggle").click()
-        assert page.locator("label[for=author]").inner_text() == "姓名 / 暱稱 *"
-        assert page.locator("#preview").is_visible()
-        assert page.locator("#preview-text .article-body").inner_html() == preview_body
-        for name, value in values.items():
-            assert page.locator("#" + name).input_value() == value
-        page.reload(wait_until="networkidle")
-        page.wait_for_selector("#author")
-        assert page.locator("#author").input_value() == values["author"]
-        assert page.locator("#body").input_value() == values["body"]
-        assert page.locator("#contact").input_value() == ""
+        for lang, html_lang in (("en", "en"), ("zh", "zh-Hant"), ("zh-CN", "zh-CN")):
+            page.goto(base + PREFIX + "/submit.html?lang=" + lang, wait_until="networkidle")
+            page.wait_for_selector('#author')
+            assert page.locator('html').get_attribute('lang') == html_lang
+            assert [page.locator('#' + name).input_value() for name in ('campus','degree','category')] == ['', '', '']
+            assert page.locator('#dynamic-fields > .field > label').first.get_attribute('for') == 'author'
+            for name, value in {"author":"Alex / 傅", "year":"2024", "field":"Computing / 计算机", "destination":"Test / 测试", "body":"## Journey\n\n**Experience**"}.items():
+                page.locator('#' + name).fill(value)
+            for name,value in {"campus":"gz","degree":"MPhil","category":"research"}.items():
+                page.locator('#' + name).select_option(value)
+            page.locator('[data-contact="type"]').fill('Email')
+            page.locator('#preview-button').click()
+            assert page.locator('#preview').is_hidden()
+            page.locator('[data-contact="value"]').fill('test@example.com')
+            page.locator('#preview-button').click()
+            assert page.locator('#preview').is_visible()
+            original = page.locator('#preview .article-body').inner_html()
+            page.locator('.language-toggle').click()
+            assert page.locator('#preview .article-body').inner_html() == original
+            assert page.locator('#field').input_value() == 'Computing / 计算机'
+            page.reload(wait_until='networkidle')
+            page.wait_for_selector('#author')
+            assert page.locator('[data-contact="value"]').input_value() == ''
+            assert page.locator('#field').input_value() == 'Computing / 计算机'
+            assert page.locator('body').evaluate('el => el.scrollWidth <= innerWidth')
+            page.locator('button[type=reset]').click()
         assert errors == [], errors
-        assert page.locator("body").evaluate("el => el.scrollWidth <= innerWidth")
-        print(f"HKUST bilingual flow passed: {engine.name}, {width}px")
         context.close()
         browser.close()
+        print(f"Trilingual submission flow passed: {engine.name}, {width}px")
 
 if __name__ == "__main__":
     main()

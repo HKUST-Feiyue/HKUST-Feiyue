@@ -11,9 +11,9 @@ const appEnv = { GITHUB_APP_ID: '5666636', GITHUB_APP_INSTALLATION_ID: '1234', G
 
 const valid = {
   version: 1, category: 'career', author: '张同学 / Alex', year: '2026',
-  college: 'School of Engineering / 工学院', major: '软件工程',
-  destination: '某科技公司', program: '软件工程师',
-  body: 'My preparation / 我的准备：项目经历和面试。', contact: '', turnstileToken: 'sample-token'
+  campus: 'hk', degree: 'BEng', field: '软件工程',
+  destination: '某科技公司',
+  body: 'My preparation / 我的准备：项目经历和面试。', contact: [], turnstileToken: 'sample-token'
 };
 const request = (body = valid, origin = 'https://hkust-feiyue.github.io') =>
   new Request('https://worker.example/submit', {
@@ -26,8 +26,8 @@ test('validates with the canonical schema', () => {
   assert.equal(validate({ ...valid, category: 'made-up' }), null);
   assert.equal(validate({ ...valid, year: '20xx' }), null);
   assert.equal(validate({ ...valid, author: '' }), null);
-  assert.equal(validate({ ...valid, college: '' }), null);
-  assert.equal(validate({ ...valid, major: '' }), null);
+  assert.equal(validate({ ...valid, campus: '' }), null);
+  assert.equal(validate({ ...valid, field: '' }), null);
   assert.equal(validate({ ...valid, body: 'x'.repeat(8000) })?.category, 'career');
   assert.equal(validate({ ...valid, body: 'x'.repeat(8001) }), null);
   assert.equal(validate({ ...valid, contact: 'x'.repeat(501) }), null);
@@ -38,7 +38,7 @@ test('renders a signed, reviewable Issue', async () => {
   assert.match(issue.title, /^\[飞跃手册投稿\]/);
   assert.deepEqual(issue.labels, ['submission:pending']);
   assert.match(issue.body, /hkust-submission-v2:/);
-  assert.match(issue.body, /^\*\*方向：\*\* 就业/m);
+  assert.match(issue.body, /^\*\*分享方向：\*\* > career/m);
   assert.match(issue.body, /\n---\n\n\*\*已分配至：\*\* @HKUST-Feiyue\/career-reviewers\n\n<!-- hkust-submission-v2:/);
   assert.doesNotMatch(issue.body, /飞跃手册经历投稿（待审核）|公开投稿，内容尚未经核实|\*\*审核组：\*\*/);
   assert.doesNotMatch(issue.body, /sample-token/);
@@ -120,3 +120,13 @@ test('rejects verification for another origin or action', async () => {
     assert.equal(calls, 1);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+ test('contact normalization and partial row rejection', () => {
+   assert.deepEqual(validate({...valid,contact:[{type:' ',value:''},{type:' 微信 ',value:' id '}]}).contact,[{type:'微信',value:'id'}]);
+   for (const contact of [[{type:'Email',value:''}],[{type:'',value:'id'}],[{type:'a',value:'x',extra:true}],[{type:'x',value:'y'}].flatMap(row=>Array(11).fill(row)),null]) {
+     assert.equal(validate({...valid,contact}),null);
+   }
+ });
+ test('rejects invalid enum values and retired metadata', () => {
+   for (const change of [{campus:'other'},{degree:'Bachelor'},{year:2024},{field:''},{college:'legacy'}]) assert.equal(validate({...valid,...change}),null);
+ });
