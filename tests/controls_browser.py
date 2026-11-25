@@ -33,9 +33,15 @@ def check_controls(playwright, base):
             page.wait_for_function("document.querySelector('#degree-trigger').getAttribute('aria-expanded')==='true'")
             assert page.locator('#degree-options .select-group').count() == 4
             assert page.locator('#degree-options [data-value=""]').count() == 0
-            page.locator('#degree-trigger .select-value').click()
+            if width < 500:
+                page.locator('#degree-trigger .select-value').tap()
+            else:
+                page.locator('#degree-trigger .select-value').click()
             assert not page.locator('#degree-options').evaluate("el=>el.matches(':popover-open')")
-            page.locator('#degree-trigger svg').click()
+            if width < 500:
+                page.locator('#degree-trigger svg').tap()
+            else:
+                page.locator('#degree-trigger svg').click()
             assert page.locator('#degree-options').evaluate("el=>el.matches(':popover-open')")
             assert page.locator('#degree-options').evaluate(
                 'el=>el.scrollHeight>el.clientHeight && el.getBoundingClientRect().height<=322 && el.getBoundingClientRect().right<=innerWidth-10 && el.getBoundingClientRect().bottom<=innerHeight-6')
