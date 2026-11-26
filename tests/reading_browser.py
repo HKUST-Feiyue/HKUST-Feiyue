@@ -12,6 +12,20 @@ def check_reading(playwright, base, articles):
                 assert page.locator('.community-person-name').inner_text().startswith(name)
                 assert page.locator('.community-person-info p').inner_text()=='2026 Fall · MPhil'
                 page.goto(base+'/?view=all&lang='+lang,wait_until='networkidle')
+                page.locator('#campus-filter').select_option('hk')
+                article_link = page.locator('.article-item:visible h3 a').last
+                article_link.scroll_into_view_if_needed()
+                archive_url, archive_top = page.url, page.evaluate('scrollY')
+                assert archive_top > 100
+                article_link.click()
+                page.wait_for_load_state('networkidle')
+                page.reload(wait_until='networkidle')
+                page.locator('.article-back').click()
+                page.wait_for_load_state('networkidle')
+                assert page.url == archive_url
+                page.wait_for_function('(top)=>Math.abs(scrollY-top)<2', arg=archive_top)
+                assert page.locator('#campus-filter').input_value() == 'hk'
+                page.goto(base+'/?view=all&lang='+lang,wait_until='networkidle')
                 assert page.locator('.article-item').count()==len(articles)
                 assert page.locator('.article-item-footer').count()==len(articles)
                 assert page.locator('.article-item-footer').first.evaluate("""el=>{
