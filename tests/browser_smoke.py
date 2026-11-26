@@ -514,12 +514,13 @@ def main(root=ROOT):
                         marginBottom: style.marginBottom
                     };
                 }""")
+            assert page.locator(".article-page > .article-category").count() == 0
             expected = {
                 "title": page.locator(".article-page > h1").inner_text(),
                 "author": page.locator(".article-page > .article-author").inner_text(),
                 "byline": page.locator(".article-page > .article-byline").inner_text(),
                 "field": page.locator(".article-page > .article-field").inner_text(),
-                "metadata_styles": {name: appearance(".article-page > .article-" + name) for name in ("category", "author", "byline", "field")},
+                "metadata_styles": {name: appearance(".article-page > .article-" + name) for name in ("author", "byline", "field")},
                 "headings": page.locator(".article-body h1, .article-body h2, .article-body h3").all_inner_texts(),
                 "toc": page.locator(".article-toc a").all_inner_texts(),
                 "toc_urls": page.locator(".article-toc a").evaluate_all("items => items.map(item => item.getAttribute(\'href\'))"),
@@ -543,6 +544,7 @@ def main(root=ROOT):
             page.locator("#body").fill(sample_body)
             page.locator("#preview-button").click()
             assert page.locator("#preview").is_visible()
+            assert page.locator("#preview-text > .article-category").count() == 0
             assert page.locator("#preview-text > h1").inner_text() == expected["title"]
             assert page.locator("#preview-text > .article-author").inner_text() == expected["author"]
             assert page.locator("#preview-text > .article-byline").inner_text() == expected["byline"]

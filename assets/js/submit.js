@@ -423,9 +423,7 @@
       back.className = 'article-back';
       const authorLine = make('p', author);
       authorLine.className = 'article-author';
-      const categoryLine = ui('p', selected.label);
-      categoryLine.className = 'article-category';
-      previewText.append(back, categoryLine, make('h1', destination), authorLine);
+      previewText.append(back, make('h1', destination), authorLine);
       const byline = make('p');
       const details = [ui('span', schema.fields.find(field => field.name === 'campus').options.find(item => item.value === data.get('campus')).label), make('span', data.get('year') + ' ' + schema.fields.find(field => field.name === 'term').options.find(option => option.value === data.get('term')).label), make('span', data.get('degree'))];
       details.filter(node => node.textContent).forEach((node, index) => {
