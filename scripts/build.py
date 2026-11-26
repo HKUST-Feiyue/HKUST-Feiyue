@@ -144,7 +144,7 @@ def render_home(entries):
     source = re.sub(r'(<div id="articles"[^>]*>).*?(</div>\s*<div id="empty-state")', lambda m: m[1] + ''.join(cards) + m[2], source, count=1, flags=re.S)
     years = ''.join(f'<option value="{html.escape(year, quote=True)}">{html.escape(year)}</option>' for year in sorted({entry["year"] for entry in entries}, reverse=True))
     source = re.sub(r'(<select\b[^>]*\bid="year-filter"[^>]*>).*?(</select>)', lambda m: m[1] + '<option value="all">全部年份</option>' + years + m[2], source, count=1, flags=re.S)
-    for name, default in (("campus", "全部校区"), ("degree", "全部学位")):
+    for name, default in (("campus", "全部校园"), ("degree", "全部学位")):
         field = next(x for x in SCHEMA["fields"] if x["name"] == name)
         available = {entry[name] for entry in entries}
         options = ''.join(f'<option value="{html.escape(x["value"], quote=True)}">{html.escape(x["label"])}</option>' for x in field["options"] if name == "campus" or x["value"] in available)
