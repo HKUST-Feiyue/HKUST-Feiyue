@@ -66,10 +66,12 @@ if __name__ == '__main__':
     from threading import Thread
     from playwright.sync_api import sync_playwright
     from browser_smoke import Handler,ROOT
-    server=ThreadingHTTPServer(('127.0.0.1',0),partial(Handler,directory=str(ROOT/'_site')))
-    Thread(target=server.serve_forever,daemon=True).start()
-    try:
-        with sync_playwright() as playwright:
-            check_locale(playwright,f'http://127.0.0.1:{server.server_port}',json.loads((ROOT/'_site/data/articles.json').read_text(encoding='utf-8')))
-    finally:
-        server.shutdown()
+    from browser_fixture import browser_site
+    with browser_site(ROOT) as ROOT:
+        server=ThreadingHTTPServer(('127.0.0.1',0),partial(Handler,directory=str(ROOT/'_site')))
+        Thread(target=server.serve_forever,daemon=True).start()
+        try:
+            with sync_playwright() as playwright:
+                check_locale(playwright,f'http://127.0.0.1:{server.server_port}',json.loads((ROOT/'_site/data/articles.json').read_text(encoding='utf-8')))
+        finally:
+            server.shutdown()

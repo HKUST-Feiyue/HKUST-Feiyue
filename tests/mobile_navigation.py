@@ -8,10 +8,10 @@ from playwright.sync_api import sync_playwright
 from browser_smoke import Handler, PREFIX, ROOT
 
 
-def main():
+def main(root=ROOT):
     server = ThreadingHTTPServer(
         ("127.0.0.1", 0),
-        partial(Handler, directory=str(ROOT / "_site")),
+        partial(Handler, directory=str(root / "_site")),
     )
     Thread(target=server.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{server.server_port}{PREFIX}"
@@ -72,7 +72,7 @@ def main():
                             return samples;
                         }""")
                         assert all(abs(sample['top'])<.5 and abs(sample['height']-72)<.5 and abs(sample['width']-width)<.5 for sample in samples),samples
-                    assert page.evaluate("!CSS.supports('overscroll-behavior-y','none') || getComputedStyle(document.documentElement).overscrollBehaviorY==='none'"), page.evaluate("({support:CSS.supports('overscroll-behavior-y','none'),value:getComputedStyle(document.documentElement).overscrollBehaviorY})")
+                    assert page.evaluate("document.scrollingElement === document.documentElement && getComputedStyle(document.documentElement).overscrollBehaviorY !== 'none'")
                     page.locator('#menu-toggle').click()
                     page.evaluate('scrollTo(0,document.documentElement.scrollHeight)')
                     assert page.locator('.topbar').evaluate('el=>Math.abs(el.getBoundingClientRect().top)<.5')
@@ -136,4 +136,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    from browser_fixture import browser_site
+    with browser_site(ROOT) as root:
+        main(root)

@@ -35,6 +35,8 @@ def build(root, destination, options):
     from scripts.site_metadata import generate, verify_metadata
     generate(destination)
     verify_metadata(destination)
+    if not any((destination / "articles").glob("*.html")):
+        return ([result.stdout.strip()], [])
     # Generate a static, self-hosted Pagefind index from actual published articles.
     search = subprocess.run(
         [sys.executable, "-m", "pagefind", "--site", str(destination), "--force-language", "zh"],

@@ -30,7 +30,7 @@ def check_reading(playwright, base, articles):
                 page.goto(base+'/'+articles[0]['url']+'?lang='+lang,wait_until='networkidle')
                 assert page.locator('.article-page > h1').evaluate("""el=>{
                     const style=getComputedStyle(el),article=getComputedStyle(el.parentElement);
-                    return style.fontFamily===article.fontFamily && !style.fontFamily.includes('Georgia') && style.fontStyle==='normal' && style.transform==='none' && parseFloat(style.fontSize)<=36;
+                    return style.fontFamily===article.fontFamily && !style.fontFamily.includes('Georgia') && style.fontStyle==='normal' && style.transform==='none' && parseFloat(style.fontSize)<=(innerWidth<=900?32:40);
                 }""")
                 assert page.locator('.article-page').evaluate('el=>el.getBoundingClientRect().width<=761')
                 assert page.locator('body').evaluate('el=>el.scrollWidth<=innerWidth')
@@ -62,9 +62,11 @@ if __name__=='__main__':
     from threading import Thread
     from playwright.sync_api import sync_playwright
     from browser_smoke import Handler,ROOT
-    server=ThreadingHTTPServer(('127.0.0.1',0),partial(Handler,directory=str(ROOT/'_site')))
-    Thread(target=server.serve_forever,daemon=True).start()
-    try:
-        with sync_playwright() as playwright:
-            check_reading(playwright,f'http://127.0.0.1:{server.server_port}',json.loads((ROOT/'_site/data/articles.json').read_text(encoding='utf-8')))
-    finally: server.shutdown()
+    from browser_fixture import browser_site
+    with browser_site(ROOT) as ROOT:
+        server=ThreadingHTTPServer(('127.0.0.1',0),partial(Handler,directory=str(ROOT/'_site')))
+        Thread(target=server.serve_forever,daemon=True).start()
+        try:
+            with sync_playwright() as playwright:
+                check_reading(playwright,f'http://127.0.0.1:{server.server_port}',json.loads((ROOT/'_site/data/articles.json').read_text(encoding='utf-8')))
+        finally: server.shutdown()

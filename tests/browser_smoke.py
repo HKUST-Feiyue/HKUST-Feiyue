@@ -32,13 +32,15 @@ class Handler(SimpleHTTPRequestHandler):
         pass
 
 
-def main():
+def main(root=ROOT):
+    global ROOT
+    ROOT = root
     server = ThreadingHTTPServer(("127.0.0.1", 0), partial(Handler, directory=str(ROOT / "_site")))
     worker = Thread(target=server.serve_forever, daemon=True)
     worker.start()
     base = f"http://127.0.0.1:{server.server_port}"
     articles = json.loads((ROOT / "_site/data/articles.json").read_text(encoding="utf-8"))
-    output = ROOT / "output/playwright"
+    output = Path(__file__).resolve().parents[1] / "output/playwright"
     output.mkdir(parents=True, exist_ok=True)
     try:
         with sync_playwright() as playwright:
@@ -80,7 +82,8 @@ def main():
                     assert page.locator("h1:visible").count() == 1
                     first_meta = page.locator(".article-item .article-meta").first.inner_text()
                     assert first_meta.endswith(articles[0]["year"] + " " + articles[0]["term"].title() + " · " + articles[0]["degree"])
-                    assert page.locator(".article-item h3").first.inner_text().startswith(articles[0]["author"] + " · ")
+                    assert page.locator(".article-item h3").first.inner_text() == articles[0]["destination"]
+                    assert page.locator(".article-item .article-author").first.inner_text() == articles[0]["author"]
                     assert page.locator(".article-item").first.evaluate("el => el.querySelector('h3').compareDocumentPosition(el.querySelector('.article-meta')) & Node.DOCUMENT_POSITION_FOLLOWING")
                     # A bounded image banner retains aspect ratio at desktop/mobile sizes.
                     background = page.evaluate("""() => {
@@ -316,7 +319,7 @@ def main():
                     page.locator("#search").fill("no-matching-story-987654321")
                     assert page.locator(".article-item:not([hidden])").count() == visible_before_search
                     page.wait_for_function("document.querySelector('#search-results').textContent.includes('沒有找到匹配內容')")
-                    page.locator("#search").fill("官方")
+                    page.locator("#search").fill("bodytokenqa")
                     page.locator("#search-results li a").first.wait_for(state="visible")
                     assert page.locator("#search-results .search-summary").inner_text().startswith("找到 ")
                     assert page.locator("#search-results .search-match mark").count() > 0
@@ -325,7 +328,8 @@ def main():
                     opened_article = next((entry for entry in articles
                                            if page.url.split("?")[0].endswith("/" + entry["url"])), None)
                     assert opened_article is not None
-                    assert opened_article["author"] in page.locator(".article-page > h1").inner_text()
+                    assert opened_article["destination"] == page.locator(".article-page > h1").inner_text()
+                    assert opened_article["author"] == page.locator(".article-page > .article-author").inner_text()
                     if width == 1600:
                         assert page.evaluate("""() => {
                             const main = document.querySelector('main.content');
@@ -335,7 +339,7 @@ def main():
                             const style = getComputedStyle(main);
                             return content.width <= 761 && Math.abs((content.left + content.right) - (box.left + box.right)) < 2;
                         }""")
-                    assert page.locator(".demo-badge").is_visible() == opened_article["demo"]
+
                     assert page.locator(".article-toc").count() <= 1
                     if page.locator(".article-toc").count():
                         assert page.locator(".article-toc").evaluate("el => el.tagName") == "DETAILS"
@@ -439,7 +443,7 @@ def main():
                 }
                 page.wait_for_load_state("networkidle")
                 Handler.script_delay = 0
-                page.goto(base + "/articles/demo-further-studies.html", wait_until="networkidle")
+                page.goto(base + "/articles/fixture-further-studies.html", wait_until="networkidle")
                 Handler.script_delay = 2
                 page.locator('.article-back').click(no_wait_after=True)
                 page.wait_for_url(lambda url: parse_qs(urlsplit(url).query).get("category") == ["further-studies"], wait_until="commit")
@@ -471,7 +475,7 @@ def main():
             assert parse_qs(urlsplit(page.url).query)['view'] == ['all']
             page.goto(base + '/?category=further-studies', wait_until='networkidle')
             page.locator('.search-open').click()
-            page.locator('#search').fill("周同學")
+            page.locator('#search').fill("Fixture author 3")
             page.wait_for_function("document.querySelector('#search-results').textContent.includes('沒有找到匹配內容')")
             page.locator('.search-close').click()
             page.locator(".article-item:visible h3 a").first.click()
@@ -493,12 +497,12 @@ def main():
             context.close()
             # A submitted Markdown story should preview as its published counterpart.
             # Inspect real production-rendered HTML, not an imagined CSS fixture.
-            demo_source = (ROOT / "content/demo/demo-further-studies.md").read_text(encoding="utf-8")
-            demo_body = demo_source.split('---', 2)[2].strip()
+            sample_source = (ROOT / "content/fixture-further-studies.md").read_text(encoding="utf-8")
+            sample_body = sample_source.split('---', 2)[2].strip()
             context = browser.new_context(reduced_motion="reduce")
             context.add_init_script("localStorage.setItem('hkust-feiyue-lang', 'zh')")
             page = context.new_page()
-            page.goto(base + PREFIX + "/articles/demo-further-studies.html", wait_until="networkidle")
+            page.goto(base + PREFIX + "/articles/fixture-further-studies.html", wait_until="networkidle")
             def appearance(selector):
                 return page.locator(selector).first.evaluate("""el => {
                     const style = getComputedStyle(el);
@@ -512,7 +516,10 @@ def main():
                 }""")
             expected = {
                 "title": page.locator(".article-page > h1").inner_text(),
+                "author": page.locator(".article-page > .article-author").inner_text(),
                 "byline": page.locator(".article-page > .article-byline").inner_text(),
+                "field": page.locator(".article-page > .article-field").inner_text(),
+                "metadata_styles": {name: appearance(".article-page > .article-" + name) for name in ("category", "author", "byline", "field")},
                 "headings": page.locator(".article-body h1, .article-body h2, .article-body h3").all_inner_texts(),
                 "toc": page.locator(".article-toc a").all_inner_texts(),
                 "toc_urls": page.locator(".article-toc a").evaluate_all("items => items.map(item => item.getAttribute(\'href\'))"),
@@ -526,17 +533,18 @@ def main():
             ))
             page.goto(base + PREFIX + "/submit.html", wait_until="networkidle")
             page.locator("#category").select_option("further-studies")
-            page.locator("#author").fill("演示作者 1")
+            page.locator("#author").fill("Fixture author 1")
             page.locator("#year").fill("2020")
             page.locator("#term").select_option("fall")
             page.locator('[name="campus"][value="hk"]').check()
             page.locator("#degree").select_option("BSc")
-            page.locator("#field").fill("Computer Science")
-            page.locator("#destination").fill("示例项目 1")
-            page.locator("#body").fill(demo_body)
+            page.locator("#field").fill("Fixture field 1")
+            page.locator("#destination").fill("Fixture destination 1")
+            page.locator("#body").fill(sample_body)
             page.locator("#preview-button").click()
             assert page.locator("#preview").is_visible()
             assert page.locator("#preview-text > h1").inner_text() == expected["title"]
+            assert page.locator("#preview-text > .article-author").inner_text() == expected["author"]
             assert page.locator("#preview-text > .article-byline").inner_text() == expected["byline"]
             assert page.locator("#preview-text .article-body h1, #preview-text .article-body h2, #preview-text .article-body h3").all_inner_texts() == expected["headings"]
             assert page.locator("#preview-text .article-toc a").all_inner_texts() == expected["toc"]
@@ -544,6 +552,9 @@ def main():
             assert appearance("#preview-text .article-body") == expected["body"]
             assert appearance("#preview-text .article-body h2") == expected["h2"]
             assert appearance("#preview-text > h1") == expected["title_style"]
+            assert page.locator("#preview-text > .article-field").inner_text() == expected["field"]
+            for name, style in expected["metadata_styles"].items():
+                assert appearance("#preview-text > .article-" + name) == style
             # Blockquotes are structural Markdown, not a literal leading '>'.
             # Both the inline editor and the full article preview must render them.
             quoted = ("> 本文僅用於系統測試，不代表真實錄取。\n\n"
@@ -564,7 +575,7 @@ def main():
             page = context.new_page()
             page.goto(base + "/?view=all", wait_until="networkidle")
             page.locator(".search-open").click()
-            for query in (articles[0]["author"], articles[0]["field"], "官方"):
+            for query in (articles[0]["author"], articles[0]["destination"], articles[0]["field"], "bodytokenqa"):
                 page.locator("#search").fill(query)
                 page.locator("#search-results li a").first.wait_for(state="visible")
             page.locator("#search").fill("contactexcluded7x9")
@@ -663,7 +674,7 @@ def main():
             context = browser.new_context(viewport={"width": 390, "height": 844})
             context.add_init_script("localStorage.setItem('hkust-feiyue-lang', 'zh')")
             page = context.new_page()
-            page.goto(base + "/articles/demo-further-studies.html", wait_until="networkidle")
+            page.goto(base + "/articles/fixture-further-studies.html", wait_until="networkidle")
             toc = page.locator(".article-toc")
             toc.locator("summary").click()
             assert toc.get_attribute("open") is not None
@@ -740,4 +751,6 @@ def check_languages(playwright, base, articles):
         print(f"Bilingual submission flow passed: {engine.name}, {width}px")
 
 if __name__ == "__main__":
-    main()
+    from browser_fixture import browser_site
+    with browser_site(ROOT) as root:
+        main(root)
