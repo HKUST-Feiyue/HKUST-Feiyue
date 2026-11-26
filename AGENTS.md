@@ -6,7 +6,7 @@ Source (`HKUST-Feiyue/HKUST-Feiyue`) owns code, content, workflows, and build lo
 2. Keep the site static and accessible. Prefer HTML/CSS/vanilla JS. Add dependencies only when a real requirement justifies them.
 3. Five editorial categories only: further studies, research, career, exchange, entrepreneurship. Experiences include guidance; do not create a separate guide category.
 4. `data/schema.json` owns category labels and submission fields. Never duplicate category definitions in multiple scripts. Article titles are derived from destination; do not request a redundant title from contributors.
-5. Never pass invented student stories, admission results, testimonials, or counts off as real. Fictional editorial examples use ordinary Markdown articles and explicitly identify themselves as fictional in the content and title; never invent verifiable credentials or outcomes.
+5. Never pass invented student stories, admission results, testimonials, or counts off as real. Fictional editorial examples use ordinary Markdown articles and use natural first-person narratives with a brief fictional-content notice at the end; never invent verifiable credentials or outcomes.
 6. No hidden submission side effects. Never claim a submission succeeded until the backend confirms it.
 7. Public GitHub Issues expose submitted content including optional contact details. Show a plain-language warning next to the form.
 8. Use semantic markup, keyboard-accessible controls, responsive layouts, reduced-motion support, and readable contrast.

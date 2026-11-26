@@ -229,7 +229,7 @@ class SubmissionBuildTests(unittest.TestCase):
         meta = {"category": "career", "author": "Test author", "year": "2026", "term": "fall", "campus": "hk", "degree": "BSc", "field": "Computing", "published_at": "2026-11-25T00:00:00Z", "destination": "Example"}
         page = build.render(meta, "Article body", "articles/example.html")
         self.assertIn(">Example</h1>", page)
-        self.assertIn(">Test author</p>", page)
+        self.assertIn(">Test author · 2026 Fall</p>", page)
 
     def test_preview_reuses_article_styles(self):
         source = "".join((ROOT / "assets/css/site.css").read_text(encoding="utf-8").split())

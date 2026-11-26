@@ -57,7 +57,7 @@ class ContractTests(unittest.TestCase):
                 self.assertIn('class="article-contact" data-pagefind-ignore',page)
                 self.assertIn('data-copy="contact-unique@example.com"',page)
                 self.assertIn('>Example Lab</h1>',page)
-                self.assertIn('>Alex &lt;script&gt;</p>',page)
+                self.assertIn('>Alex &lt;script&gt; · 2024 Fall</p>',page)
                 self.assertNotIn('<script> · Example Lab',page)
                 self.assertNotIn('contact-unique',excerpt(body))
                 self.assertFalse(import_event(event,Path(directory),generated["pem"])[1])

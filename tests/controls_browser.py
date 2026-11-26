@@ -80,7 +80,8 @@ def check_controls(playwright, base):
             assert page.locator('#preview').is_visible(), page.evaluate("[...document.querySelectorAll('select')].map(el=>[el.id,el.value,el.validationMessage])")
             before = page.locator('#preview-text').inner_text()
             assert 'العربية 🙂' in before and '简体' in before
-            assert '2024 Spring' in page.locator('#preview-text .article-byline').inner_text()
+            assert '2024 Spring' in page.locator('#preview-text .article-author').inner_text()
+            assert '2024 Spring' not in page.locator('#preview-text .article-byline').inner_text()
             page.locator('.language-toggle').click()
             assert page.locator('html').get_attribute('lang') == 'en'
             assert page.locator('#degree-label').inner_text() == 'MPhil'
