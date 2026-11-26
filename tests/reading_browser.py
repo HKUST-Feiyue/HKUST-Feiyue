@@ -34,13 +34,12 @@ def check_reading(playwright, base, articles):
                     const a=date.getBoundingClientRect(),b=link.getBoundingClientRect();
                     return Math.abs(a.top-b.top)<1 && Math.abs(a.height-b.height)<1 && getComputedStyle(date).fontSize===getComputedStyle(link).fontSize;
                 }""")
-                if 360<=width<=900:
-                    assert page.locator('.attribute-filters').evaluate("""el=>{
-                        const campus=document.querySelector('#campus-trigger').getBoundingClientRect();
-                        const year=document.querySelector('#year-trigger').getBoundingClientRect();
-                        const degree=document.querySelector('#degree-trigger').getBoundingClientRect();
-                        return Math.abs(campus.top-year.top)<1 && Math.abs(campus.width-year.width)<1 && degree.width>campus.width*1.8;
-                    }""")
+                assert page.locator('.attribute-filters .select-trigger').evaluate_all("""items=>items.every(el=>{
+                    const range=document.createRange();
+                    range.selectNodeContents(el.querySelector('.select-value'));
+                    const rect=el.getBoundingClientRect();
+                    return rect.width<=range.getBoundingClientRect().width+52 && rect.right<=innerWidth && rect.height<=40;
+                })""")
                 assert page.locator('.article-excerpt').first.evaluate('el=>el.getBoundingClientRect().height<=parseFloat(getComputedStyle(el).lineHeight)*3+1')
                 page.goto(base+'/'+articles[0]['url']+'?lang='+lang,wait_until='networkidle')
                 assert page.locator('.article-page > h1').evaluate("""el=>{
