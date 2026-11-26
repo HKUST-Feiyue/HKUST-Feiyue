@@ -72,7 +72,7 @@ def main(root=ROOT):
                             return samples;
                         }""")
                         assert all(abs(sample['top'])<.5 and abs(sample['height']-72)<.5 and abs(sample['width']-width)<.5 for sample in samples),samples
-                    assert page.evaluate("!CSS.supports('overscroll-behavior-y','none') || getComputedStyle(document.documentElement).overscrollBehaviorY==='none'"), page.evaluate("({support:CSS.supports('overscroll-behavior-y','none'),value:getComputedStyle(document.documentElement).overscrollBehaviorY})")
+                    assert page.evaluate("document.scrollingElement === document.documentElement && getComputedStyle(document.documentElement).overscrollBehaviorY !== 'none'")
                     page.locator('#menu-toggle').click()
                     page.evaluate('scrollTo(0,document.documentElement.scrollHeight)')
                     assert page.locator('.topbar').evaluate('el=>Math.abs(el.getBoundingClientRect().top)<.5')
