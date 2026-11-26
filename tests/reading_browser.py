@@ -12,7 +12,8 @@ def check_reading(playwright, base, articles):
                 assert page.locator('.community-person-name').inner_text().startswith(name)
                 assert page.locator('.community-person-info p').inner_text()=='2026 Fall · MPhil'
                 page.goto(base+'/?view=all&lang='+lang,wait_until='networkidle')
-                page.locator('#campus-filter').select_option('hk')
+                page.locator('#campus-trigger').click()
+                page.locator('#campus-options [data-value=hk]').click()
                 article_link = page.locator('.article-item:visible h3 a').last
                 article_link.scroll_into_view_if_needed()
                 archive_url, archive_top = page.url, page.evaluate('scrollY')
@@ -47,6 +48,14 @@ def check_reading(playwright, base, articles):
                     return style.fontFamily===article.fontFamily && !style.fontFamily.includes('Georgia') && style.fontStyle==='normal' && style.transform==='none' && parseFloat(style.fontSize)<=(innerWidth<=900?32:40);
                 }""")
                 assert page.locator('.article-page').evaluate('el=>el.getBoundingClientRect().width<=761')
+                assert page.locator('.article-page > .article-field').count() == 0
+                assert page.locator('.article-byline .article-field').count() == 1
+                if width > 900:
+                    assert page.locator('.article-tools').evaluate("""el=>{
+                        const a=el.querySelector('.article-back').getBoundingClientRect();
+                        const b=el.querySelector('.search-open').getBoundingClientRect();
+                        return Math.abs((a.top+a.height/2)-(b.top+b.height/2))<1;
+                    }""")
                 assert page.locator('body').evaluate('el=>el.scrollWidth<=innerWidth')
                 for route in ('/community.html', '/submit.html', '/'+articles[0]['url']):
                     page.goto(base+route+'?lang='+lang,wait_until='networkidle')

@@ -416,7 +416,7 @@
       const matches = [...cardByPath].flatMap(([path, card]) => {
         if (card.hidden) return [];
         const title = card.querySelector('h3 a').textContent;
-        const byline = card.querySelector('.article-author').textContent + ' · ' + card.querySelector('.article-meta').textContent + ' · ' + card.querySelector('.article-field').textContent;
+        const byline = card.querySelector('.article-author').textContent + ' · ' + card.querySelector('.article-meta').textContent;
         const titleMatch = normalize(title).includes(titleQuery);
         const bylineMatch = normalize(byline).includes(titleQuery);
         const body = bodyMatches.get(path);
@@ -436,7 +436,7 @@
         title.className = 'search-title';
         highlight(title, match.title, query);
         link.append(title);
-        for (const selector of ['.article-author', '.article-meta', '.article-field']) {
+        for (const selector of ['.article-author', '.article-meta']) {
           const metadata = document.createElement('span');
           metadata.className = 'search-match';
           metadata.textContent = match.card.querySelector(selector).textContent;

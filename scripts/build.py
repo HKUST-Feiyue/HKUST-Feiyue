@@ -115,7 +115,7 @@ def shared_chrome(source, page, prefix="./", category=None):
 
 def render(meta, body, url):
     clean = render_markdown(body)
-    byline = " · ".join([ui(next(x["label"] for x in next(field for field in SCHEMA["fields"] if field["name"] == "campus")["options"] if x["value"] == meta["campus"])), original(entry_period(meta)), original(meta["degree"])])
+    byline = " · ".join([ui(next(x["label"] for x in next(field for field in SCHEMA["fields"] if field["name"] == "campus")["options"] if x["value"] == meta["campus"])), original(meta["degree"])])
     headings = re.findall(r'<h([23]) id="([^"]+)">(.+?)</h[23]>', clean)
     toc = '<details class="article-toc"><summary>本页目录</summary><div class="article-toc-panel"><div class="article-toc-clip"><ul>' + ''.join(f'<li class="toc-depth-{level}"><a data-i18n-ignore href="#{html.escape(anchor, quote=True)}">{text}</a></li>' for level, anchor, text in headings) + '</ul></div></div></details>' if len(headings) >= 2 else ''
 
@@ -129,9 +129,8 @@ def render(meta, body, url):
     source = re.sub(r'<title>.*?</title>', lambda _: f'<title data-i18n-ignore>{title} · HKUST Feiyue</title>', source, count=1, flags=re.S)
     description = html.escape(excerpt(body), quote=True)
     source = re.sub(r'<meta name="description"[^>]*>', lambda _: f'<meta name="description" content="{description}" data-i18n-ignore>', source, count=1)
-    content = f'<article class="article-page" data-pagefind-body><a class="article-back" href="../?category={quote(str(meta["category"]))}"><span class="link-arrow link-arrow-left" aria-hidden="true"></span> {ui("返回{category}", category=CATEGORIES[meta["category"]])}</a><h1 data-pagefind-meta="title" data-i18n-ignore>{title}</h1><p class="article-author" data-pagefind-meta="author" data-i18n-ignore>{html.escape(meta["author"])}</p><p class="article-byline" data-pagefind-meta="byline">{byline}</p><p class="article-field" data-i18n-ignore>{html.escape(meta["field"])}</p><time datetime="{html.escape(meta["published_at"], quote=True)}">{html.escape(meta["published_at"][:10])}</time>{toc}<div class="article-body">{clean}</div>{contact}</article>'
     search_button = re.search(r'<button[^>]*class="search-open".*?</button>', source, re.S)[0].replace(' hidden', '')
-    content = content.replace('<h1 ', '<div class="article-tools">' + search_button + '</div><h1 ', 1)
+    content = f'<article class="article-page" data-pagefind-body><div class="article-tools"><a class="article-back" href="../?category={quote(str(meta["category"]))}"><span class="link-arrow link-arrow-left" aria-hidden="true"></span> {ui("返回{category}", category=CATEGORIES[meta["category"]])}</a>{search_button}</div><h1 data-pagefind-meta="title" data-i18n-ignore>{title}</h1><p class="article-author" data-pagefind-meta="author" data-i18n-ignore>{html.escape(meta["author"])} · {html.escape(entry_period(meta))}</p><p class="article-byline" data-pagefind-meta="byline">{byline} · <span class="article-field" data-i18n-ignore>{html.escape(meta["field"])}</span></p><time datetime="{html.escape(meta["published_at"], quote=True)}">{html.escape(meta["published_at"][:10])}</time>{toc}<div class="article-body">{clean}</div>{contact}</article>'
     return re.sub(r'(<main[^>]*>).*?(</main>)', lambda m: m[1] + content + m[2], source, count=1, flags=re.S)
 
 
@@ -140,8 +139,8 @@ def render_home(entries):
     cards = []
     for entry in entries:
         esc = lambda value: html.escape(str(value), quote=True)
-        label = ' · '.join([ui(next(x["label"] for x in next(field for field in SCHEMA["fields"] if field["name"] == "campus")["options"] if x["value"] == entry["campus"])), original(entry_period(entry)), original(entry["degree"])])
-        cards.append(f'<article class="article-item" data-category="{esc(entry["category"])}" data-campus="{esc(entry["campus"])}" data-degree="{esc(entry["degree"])}" data-year="{esc(entry["year"])}"><p class="article-category">{ui(CATEGORIES[entry["category"]])}</p><h3 data-i18n-ignore><a href="./{esc(entry["url"])}">{esc(entry["title"])}</a></h3><p class="article-author" data-i18n-ignore>{esc(entry["author"])}</p><p class="article-meta">{label}</p><p class="article-field" data-i18n-ignore>{esc(entry["field"])}</p><p class="article-excerpt" data-i18n-ignore>{esc(entry["excerpt"])}</p><div class="article-item-footer"><time datetime="{esc(entry["published_at"])}">{esc(entry["published_at"][:10])}</time><a class="article-more" href="./{esc(entry["url"])}">阅读全文<span class="link-arrow"></span></a></div></article>')
+        label = ' · '.join([ui(next(x["label"] for x in next(field for field in SCHEMA["fields"] if field["name"] == "campus")["options"] if x["value"] == entry["campus"])), original(entry["degree"])])
+        cards.append(f'<article class="article-item" data-category="{esc(entry["category"])}" data-campus="{esc(entry["campus"])}" data-degree="{esc(entry["degree"])}" data-year="{esc(entry["year"])}"><p class="article-category">{ui(CATEGORIES[entry["category"]])}</p><h3 data-i18n-ignore><a href="./{esc(entry["url"])}">{esc(entry["title"])}</a></h3><p class="article-author" data-i18n-ignore>{esc(entry["author"])} · {esc(entry_period(entry))}</p><p class="article-meta">{label} · <span class="article-field" data-i18n-ignore>{esc(entry["field"])}</span></p><p class="article-excerpt" data-i18n-ignore>{esc(entry["excerpt"])}</p><div class="article-item-footer"><time datetime="{esc(entry["published_at"])}">{esc(entry["published_at"][:10])}</time><a class="article-more" href="./{esc(entry["url"])}">阅读全文<span class="link-arrow"></span></a></div></article>')
     source = re.sub(r'(<div id="articles"[^>]*>).*?(</div>\s*<div id="empty-state")', lambda m: m[1] + ''.join(cards) + m[2], source, count=1, flags=re.S)
     years = ''.join(f'<option value="{html.escape(year, quote=True)}">{html.escape(year)}</option>' for year in sorted({entry["year"] for entry in entries}, reverse=True))
     source = re.sub(r'(<select\b[^>]*\bid="year-filter"[^>]*>).*?(</select>)', lambda m: m[1] + '<option value="all">全部年份</option>' + years + m[2], source, count=1, flags=re.S)

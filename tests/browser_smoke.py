@@ -81,9 +81,9 @@ def main(root=ROOT):
                     page.goto(base + PREFIX + "/", wait_until="networkidle")
                     assert page.locator("h1:visible").count() == 1
                     first_meta = page.locator(".article-item .article-meta").first.inner_text()
-                    assert first_meta.endswith(articles[0]["year"] + " " + articles[0]["term"].title() + " · " + articles[0]["degree"])
+                    assert first_meta.endswith(articles[0]["degree"] + " · " + articles[0]["field"])
                     assert page.locator(".article-item h3").first.inner_text() == articles[0]["destination"]
-                    assert page.locator(".article-item .article-author").first.inner_text() == articles[0]["author"]
+                    assert page.locator(".article-item .article-author").first.inner_text() == articles[0]["author"] + " · " + articles[0]["year"] + " " + articles[0]["term"].title()
                     assert page.locator(".article-item").first.evaluate("el => el.querySelector('h3').compareDocumentPosition(el.querySelector('.article-meta')) & Node.DOCUMENT_POSITION_FOLLOWING")
                     # A bounded image banner retains aspect ratio at desktop/mobile sizes.
                     background = page.evaluate("""() => {
@@ -329,7 +329,7 @@ def main(root=ROOT):
                                            if page.url.split("?")[0].endswith("/" + entry["url"])), None)
                     assert opened_article is not None
                     assert opened_article["destination"] == page.locator(".article-page > h1").inner_text()
-                    assert opened_article["author"] == page.locator(".article-page > .article-author").inner_text()
+                    assert opened_article["author"] + " · " + opened_article["year"] + " " + opened_article["term"].title() == page.locator(".article-page > .article-author").inner_text()
                     if width == 1600:
                         assert page.evaluate("""() => {
                             const main = document.querySelector('main.content');
@@ -519,8 +519,8 @@ def main(root=ROOT):
                 "title": page.locator(".article-page > h1").inner_text(),
                 "author": page.locator(".article-page > .article-author").inner_text(),
                 "byline": page.locator(".article-page > .article-byline").inner_text(),
-                "field": page.locator(".article-page > .article-field").inner_text(),
-                "metadata_styles": {name: appearance(".article-page > .article-" + name) for name in ("author", "byline", "field")},
+                "field": page.locator(".article-page .article-field").inner_text(),
+                "metadata_styles": {name: appearance(".article-page > .article-" + name) for name in ("author", "byline")},
                 "headings": page.locator(".article-body h1, .article-body h2, .article-body h3").all_inner_texts(),
                 "toc": page.locator(".article-toc a").all_inner_texts(),
                 "toc_urls": page.locator(".article-toc a").evaluate_all("items => items.map(item => item.getAttribute(\'href\'))"),
@@ -554,7 +554,7 @@ def main(root=ROOT):
             assert appearance("#preview-text .article-body") == expected["body"]
             assert appearance("#preview-text .article-body h2") == expected["h2"]
             assert appearance("#preview-text > h1") == expected["title_style"]
-            assert page.locator("#preview-text > .article-field").inner_text() == expected["field"]
+            assert page.locator("#preview-text .article-field").inner_text() == expected["field"]
             for name, style in expected["metadata_styles"].items():
                 assert appearance("#preview-text > .article-" + name) == style
             # Blockquotes are structural Markdown, not a literal leading '>'.
