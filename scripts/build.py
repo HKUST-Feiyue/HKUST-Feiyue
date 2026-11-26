@@ -32,7 +32,7 @@ def parse(path):
     if meta.get("category") not in CATEGORIES:
         raise ValueError(f"{path}: unknown category {meta.get('category')}")
     allowed = {x["name"] for x in SCHEMA["fields"]} - {"body"}
-    if set(meta) - allowed - {"demo", "source_issue", "published_at"}:
+    if set(meta) - allowed - {"source_issue", "published_at"}:
         raise ValueError(f"{path}: unexpected metadata")
     clean = validate_fields(dict(meta, body=body))
     meta.update({k: v for k, v in clean.items() if k != "body"})
@@ -66,7 +66,7 @@ def entry_period(meta):
 
 def display_title(meta):
     """One title convention shared by archive cards and article pages."""
-    return str(meta["author"]).strip() + " · " + str(meta["destination"]).strip()
+    return str(meta["destination"]).strip()
 
 
 def ui(key, **params):
@@ -118,7 +118,7 @@ def render(meta, body, url):
     byline = " · ".join([ui(next(x["label"] for x in next(field for field in SCHEMA["fields"] if field["name"] == "campus")["options"] if x["value"] == meta["campus"])), original(entry_period(meta)), original(meta["degree"])])
     headings = re.findall(r'<h([23]) id="([^"]+)">(.+?)</h[23]>', clean)
     toc = '<details class="article-toc"><summary>本页目录</summary><div class="article-toc-panel"><div class="article-toc-clip"><ul>' + ''.join(f'<li class="toc-depth-{level}"><a data-i18n-ignore href="#{html.escape(anchor, quote=True)}">{text}</a></li>' for level, anchor, text in headings) + '</ul></div></div></details>' if len(headings) >= 2 else ''
-    demo = '<span class="demo-badge">演示</span>' if meta.get('demo') is True else ''
+
     contact = ''
     if meta.get("contact"):
         rows = ''.join('<p><span data-i18n-ignore>' + html.escape(row["type"]) + '：' + html.escape(row["value"]) + '</span> <button type="button" class="copy-contact" data-copy="' + html.escape(row["value"], quote=True) + '">复制</button></p>' for row in meta["contact"])
@@ -129,7 +129,7 @@ def render(meta, body, url):
     source = re.sub(r'<title>.*?</title>', lambda _: f'<title data-i18n-ignore>{title} · HKUST Feiyue</title>', source, count=1, flags=re.S)
     description = html.escape(excerpt(body), quote=True)
     source = re.sub(r'<meta name="description"[^>]*>', lambda _: f'<meta name="description" content="{description}" data-i18n-ignore>', source, count=1)
-    content = f'<article class="article-page" data-pagefind-body><a class="article-back" href="../?category={quote(str(meta["category"]))}"><span class="link-arrow link-arrow-left" aria-hidden="true"></span> {ui("返回{category}", category=CATEGORIES[meta["category"]])}</a><h1 data-pagefind-meta="title" data-i18n-ignore>{title}</h1>{demo}<p class="article-byline" data-pagefind-meta="byline">{byline}</p><p class="article-field" data-i18n-ignore>{html.escape(meta["field"])}</p><time datetime="{html.escape(meta["published_at"], quote=True)}">{html.escape(meta["published_at"][:10])}</time>{toc}<div class="article-body">{clean}</div>{contact}</article>'
+    content = f'<article class="article-page" data-pagefind-body><a class="article-back" href="../?category={quote(str(meta["category"]))}"><span class="link-arrow link-arrow-left" aria-hidden="true"></span> {ui("返回{category}", category=CATEGORIES[meta["category"]])}</a><p class="article-category">{ui(CATEGORIES[meta["category"]])}</p><h1 data-pagefind-meta="title" data-i18n-ignore>{title}</h1><p class="article-author" data-pagefind-meta="author" data-i18n-ignore>{html.escape(meta["author"])}</p><p class="article-byline" data-pagefind-meta="byline">{byline}</p><p class="article-field" data-i18n-ignore>{html.escape(meta["field"])}</p><time datetime="{html.escape(meta["published_at"], quote=True)}">{html.escape(meta["published_at"][:10])}</time>{toc}<div class="article-body">{clean}</div>{contact}</article>'
     search_button = re.search(r'<button[^>]*class="search-open".*?</button>', source, re.S)[0].replace(' hidden', '')
     content = content.replace('<h1 ', '<div class="article-tools">' + search_button + '</div><h1 ', 1)
     return re.sub(r'(<main[^>]*>).*?(</main>)', lambda m: m[1] + content + m[2], source, count=1, flags=re.S)
@@ -139,10 +139,9 @@ def render_home(entries):
     source = shared_chrome((ROOT / "index.html").read_text(encoding="utf-8"), "index")
     cards = []
     for entry in entries:
-        badge = '<span class="demo-badge">演示</span>' if entry["demo"] else ''
         esc = lambda value: html.escape(str(value), quote=True)
         label = ' · '.join([ui(next(x["label"] for x in next(field for field in SCHEMA["fields"] if field["name"] == "campus")["options"] if x["value"] == entry["campus"])), original(entry_period(entry)), original(entry["degree"])])
-        cards.append(f'<article class="article-item" data-category="{esc(entry["category"])}" data-campus="{esc(entry["campus"])}" data-degree="{esc(entry["degree"])}" data-year="{esc(entry["year"])}" data-demo="{str(entry["demo"]).lower()}">{badge}<h3 data-i18n-ignore><a href="./{esc(entry["url"])}">{esc(entry["title"])}</a></h3><p class="article-meta">{label}</p><p class="article-field" data-i18n-ignore>{esc(entry["field"])}</p><p class="article-excerpt" data-i18n-ignore>{esc(entry["excerpt"])}</p><div class="article-item-footer"><time datetime="{esc(entry["published_at"])}">{esc(entry["published_at"][:10])}</time><a class="article-more" href="./{esc(entry["url"])}">阅读全文<span class="link-arrow"></span></a></div></article>')
+        cards.append(f'<article class="article-item" data-category="{esc(entry["category"])}" data-campus="{esc(entry["campus"])}" data-degree="{esc(entry["degree"])}" data-year="{esc(entry["year"])}"><p class="article-category">{ui(CATEGORIES[entry["category"]])}</p><h3 data-i18n-ignore><a href="./{esc(entry["url"])}">{esc(entry["title"])}</a></h3><p class="article-author" data-i18n-ignore>{esc(entry["author"])}</p><p class="article-meta">{label}</p><p class="article-field" data-i18n-ignore>{esc(entry["field"])}</p><p class="article-excerpt" data-i18n-ignore>{esc(entry["excerpt"])}</p><div class="article-item-footer"><time datetime="{esc(entry["published_at"])}">{esc(entry["published_at"][:10])}</time><a class="article-more" href="./{esc(entry["url"])}">阅读全文<span class="link-arrow"></span></a></div></article>')
     source = re.sub(r'(<div id="articles"[^>]*>).*?(</div>\s*<div id="empty-state")', lambda m: m[1] + ''.join(cards) + m[2], source, count=1, flags=re.S)
     years = ''.join(f'<option value="{html.escape(year, quote=True)}">{html.escape(year)}</option>' for year in sorted({entry["year"] for entry in entries}, reverse=True))
     source = re.sub(r'(<select\b[^>]*\bid="year-filter"[^>]*>).*?(</select>)', lambda m: m[1] + '<option value="all">全部年份</option>' + years + m[2], source, count=1, flags=re.S)
@@ -151,7 +150,7 @@ def render_home(entries):
         available = {entry[name] for entry in entries}
         options = ''.join(f'<option value="{html.escape(x["value"], quote=True)}">{html.escape(x["label"])}</option>' for x in field["options"] if name == "campus" or x["value"] in available)
         source = re.sub(r'(<select\b[^>]*\bid="' + name + r'-filter"[^>]*>).*?(</select>)', lambda m: m[1] + '<option value="all">' + default + '</option>' + options + m[2], source, count=1, flags=re.S)
-    count = ui('{count} 篇经历', count=len(entries)) + (ui(' · 含演示内容') if any(entry["demo"] for entry in entries) else '')
+    count = ui('{count} 篇经历', count=len(entries))
     return re.sub(r'(<p id="results-count"[^>]*>).*?(</p>)', lambda m: m[1] + count + m[2], source, count=1, flags=re.S)
 
 
@@ -173,7 +172,6 @@ def main():
         url = "articles/" + filename
         pages[filename] = render(meta, body, url)
         entries.append({
-            "demo": meta.get("demo") is True,
             "title": display_title(meta),
             "category": meta["category"],
             "author": str(meta["author"]),

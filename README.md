@@ -97,7 +97,7 @@ sequenceDiagram
 
 首页 `index.html` 的 canonical 定义公开域名，`og:image` 与 `og:image:alt` 定义分享图片。
 
-`scripts/site_metadata.py` 在构建时统一生成每页独立的 canonical、Open Graph、Twitter Card、`sitemap.xml` 和 `robots.txt`，并在产物替换前检查一致性与本地分享图片。页面标题和摘要沿用各页面及文章自己的内容；筛选参数归一到首页，文章保留实际 `.html` 路由。演示文章继续保留可见「演示」标记。
+`scripts/site_metadata.py` 在构建时统一生成每页独立的 canonical、Open Graph、Twitter Card、`sitemap.xml` 和 `robots.txt`，并在产物替换前检查一致性与本地分享图片。页面标题和摘要沿用各页面及文章自己的内容；筛选参数归一到首页，文章保留实际 `.html` 路由。虚构示例使用普通 Markdown，标题及正文明确标注示例性质。
 
 文章发布时间取审核完成时间，入学年份用于背景和筛选。sitemap 使用绝对 canonical URL。
 

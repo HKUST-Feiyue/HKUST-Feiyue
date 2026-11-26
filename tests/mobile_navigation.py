@@ -8,10 +8,10 @@ from playwright.sync_api import sync_playwright
 from browser_smoke import Handler, PREFIX, ROOT
 
 
-def main():
+def main(root=ROOT):
     server = ThreadingHTTPServer(
         ("127.0.0.1", 0),
-        partial(Handler, directory=str(ROOT / "_site")),
+        partial(Handler, directory=str(root / "_site")),
     )
     Thread(target=server.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{server.server_port}{PREFIX}"
@@ -136,4 +136,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    from browser_fixture import browser_site
+    with browser_site(ROOT) as root:
+        main(root)

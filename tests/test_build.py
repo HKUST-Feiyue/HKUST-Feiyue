@@ -2,6 +2,7 @@
 import importlib.util
 import json
 import tempfile
+import shutil
 import unittest
 from unittest.mock import patch
 from pathlib import Path
@@ -14,10 +15,37 @@ spec.loader.exec_module(build)
 
 
 class SubmissionBuildTests(unittest.TestCase):
+    def test_removing_last_article_clears_pages_and_index(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'content').mkdir()
+            for name in ('data', 'scripts', 'assets'):
+                shutil.copytree(ROOT / name, root / name)
+            shutil.copy2(ROOT / 'PUBLISHED_README.md', root / 'PUBLISHED_README.md')
+            for name in ('index.html', 'submit.html', 'community.html'):
+                (root / name).write_text((ROOT / name).read_text(encoding='utf-8'), encoding='utf-8')
+            meta = dict(author='Fixture', destination='Fixture destination', campus='hk',
+                        year='2026', term='fall', degree='BSc', field='Original field',
+                        category='career', published_at='2026-11-25T00:00:00Z')
+            article = root / 'content/fixture.md'
+            article.write_text('---\n' + build.yaml.safe_dump(meta) + '---\n## Body\n\nFixture body', encoding='utf-8')
+            with patch.multiple(build, ROOT=root, CONTENT=root / 'content',
+                                OUTPUT=root / 'articles', INDEX=root / 'data/articles.json'):
+                build.main()
+                self.assertTrue((root / 'articles/fixture.html').is_file())
+                article.unlink()
+                build.main()
+            self.assertEqual(list((root / 'articles').glob('*.html')), [])
+            self.assertEqual(json.loads((root / 'data/articles.json').read_text(encoding='utf-8')), [])
+            self.assertNotIn('class="article-item"', (root / 'index.html').read_text(encoding='utf-8'))
+            from scripts.site_build import build as build_site
+            build_site(root, root / 'empty-site', {})
+            self.assertEqual(json.loads((root / 'empty-site/data/articles.json').read_text(encoding='utf-8')), [])
+
     def test_archive_rebuild_does_not_duplicate_nested_cards(self):
-        entry = dict(author='Test', title='Test · Example', campus='hk', year='2026', term='fall',
+        entry = dict(author='Test', title='Example', campus='hk', year='2026', term='fall',
                      degree='BSc', field='Computing', category='career', destination='Example',
-                     excerpt='Example body', demo=False, published_at='2026-11-25T00:00:00Z', url='articles/example.html')
+                     excerpt='Example body', published_at='2026-11-25T00:00:00Z', url='articles/example.html')
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / 'index.html'
@@ -81,7 +109,6 @@ class SubmissionBuildTests(unittest.TestCase):
             self.assertIn("<body data-pagefind-ignore>", html_source)
             self.assertEqual(html_source.count('id="theme-toggle"'), 1)
             self.assertNotIn('id="theme-toggle-mobile"', html_source)
-        self.assertIn('data-pagefind-body', article)
         self.assertIn('data-pagefind-body', article)
         self.assertIn('"pagefind"', renderer)
         self.assertNotIn('data-search=', homepage)
@@ -150,7 +177,7 @@ class SubmissionBuildTests(unittest.TestCase):
 
     def test_title_auto_generated(self):
         meta = {"author": "张同学", "destination": "香港中文大学"}
-        self.assertEqual(build.display_title(meta), "张同学 · 香港中文大学")
+        self.assertEqual(build.display_title(meta), "香港中文大学")
 
     def test_render_heading_table_and_sanitize(self):
         meta = {"category": "further-studies", "author": "张同学", "year": "2026", "term": "fall", "campus": "hk", "degree": "BSc", "field": "Computing", "published_at": "2026-11-25T00:00:00Z", "destination": "香港中文大学"}
@@ -198,21 +225,11 @@ class SubmissionBuildTests(unittest.TestCase):
                 with self.subTest(category=category, year=year), self.assertRaises(ValueError):
                     build.parse(source)
 
-    def test_editorial_demo_inventory(self):
-        samples = sorted((ROOT / "content/demo").glob("*.md"))
-        if not samples:
-            return  # Removing the demo directory later must stay supported.
-        self.assertEqual(len(samples), len(build.CATEGORIES))
-        categories = []
-        for path in samples:
-            meta, body = build.parse(path)
-            self.assertIs(meta.get("demo"), True)
-            self.assertNotIn("演示声明", body)
-            self.assertTrue(body.strip())
-            categories.append(meta["category"])
-            rendered = build.render(meta, body, "articles/" + path.stem + ".html")
-            self.assertEqual(rendered.count('<span class="demo-badge">演示</span>'), 1)
-        self.assertEqual(set(categories), set(build.CATEGORIES))
+    def test_article_metadata_and_author_are_separate(self):
+        meta = {"category": "career", "author": "Test author", "year": "2026", "term": "fall", "campus": "hk", "degree": "BSc", "field": "Computing", "published_at": "2026-11-25T00:00:00Z", "destination": "Example"}
+        page = build.render(meta, "Article body", "articles/example.html")
+        self.assertIn(">Example</h1>", page)
+        self.assertIn(">Test author</p>", page)
 
     def test_preview_reuses_article_styles(self):
         source = "".join((ROOT / "assets/css/site.css").read_text(encoding="utf-8").split())

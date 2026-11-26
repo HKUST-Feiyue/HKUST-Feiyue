@@ -16,7 +16,7 @@ node --test tests/worker.test.mjs
 python preview.py --build-only
 ```
 
-Windows 使用 `py -3` 替代 `python`；Worker 测试需要 Node.js 22+。预览默认在 `http://127.0.0.1:8765/`，`--build-only` 只验证并生成 `_site/`。**界面改动**还需运行 `python tests/browser_smoke.py`；PR 的 `validate.yml` 会运行浏览器检查。
+Windows 使用 `py -3` 替代 `python`；Worker 测试需要 Node.js 22+。预览默认在 `http://127.0.0.1:8765/`，`--build-only` 只验证并生成 `_site/`。**界面改动**还需运行 `python tests/browser_smoke.py`；`python tests/mobile_navigation.py` 检查移动导航；PR 的 `validate.yml` 会运行这两项浏览器检查。浏览器测试通过正式构建流程生成独立 fixture 站点，不读取生产示例文章。
 
 ## 发布与权限
 
