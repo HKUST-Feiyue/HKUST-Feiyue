@@ -90,6 +90,16 @@ def check_controls(playwright, base):
             page.locator('#degree-trigger').click()
             assert page.locator('#degree-options .select-group').first.inner_text() == 'Undergraduate'
             page.locator('#degree-trigger').press('Escape')
+            page.locator('#author').evaluate("el=>{el.value='x'.repeat(61);el.dispatchEvent(new Event('input',{bubbles:true}));}")
+            page.locator('#preview-button').click()
+            assert page.locator('#author').evaluate('el=>el.validity.customError && document.activeElement===el')
+            message = page.locator('#author').evaluate('el=>el.validationMessage')
+            assert '60' in message and '61' in message and 'Name' in message
+            page.locator('.language-toggle').click()
+            message = page.locator('#author').evaluate('el=>el.validationMessage')
+            assert '60' in message and '61' in message and '姓名' in message
+            page.locator('#author').fill('简体 / 繁體 / 日本語 / العربية / 🙂')
+            page.locator('.language-toggle').click()
             page.reload(wait_until='networkidle')
             page.wait_for_selector('#degree-trigger')
             assert page.locator('#degree-label').inner_text() == 'MPhil'

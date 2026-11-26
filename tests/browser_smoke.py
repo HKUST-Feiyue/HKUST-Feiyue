@@ -617,9 +617,12 @@ def main(root=ROOT):
             ))
             page.route("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit",
                        lambda route: route.fulfill(content_type="application/javascript",
-                           body="window.turnstileLanguages=[];window.turnstile={render:(_,o)=>{window.turnstileLanguages.push(o.language);setTimeout(()=>o.callback(),0);return 'test-widget';},getResponse:()=> 'test-token',reset:()=>{},remove:()=>{}};"))
+                           body="window.turnstileLanguages=[];window.turnstileResponseFields=[];window.turnstile={render:(host,o)=>{window.turnstileLanguages.push(o.language);window.turnstileResponseFields.push(o['response-field']);host.replaceChildren();if(o['response-field']!==false){const input=document.createElement('input');input.type='hidden';input.name='cf-turnstile-response';input.value='test-token';host.append(input);}setTimeout(()=>o.callback(),0);return 'test-widget';},getResponse:()=> 'test-token',reset:()=>{},remove:()=>{}};"))
             def accept_submission(route):
-                submissions.append(route.request.post_data_json)
+                payload = route.request.post_data_json
+                allowed = {field["name"] for field in json.loads((ROOT / "data/schema.json").read_text(encoding="utf-8"))["fields"]} | {"version", "turnstileToken"}
+                assert set(payload) == allowed, set(payload) - allowed
+                submissions.append(payload)
                 route.fulfill(status=201, content_type="application/json",
                               headers={"Access-Control-Allow-Origin": base},
                               body=json.dumps({"ok": True, "issueUrl": "https://github.com/HKUST-Feiyue/HKUST-Feiyue/issues/57"}))
@@ -651,6 +654,8 @@ def main(root=ROOT):
             assert submissions[0]["field"] == "某專業"
             assert submissions[0]["turnstileToken"] == "test-token"
             assert page.evaluate('window.turnstileLanguages') == ['zh-TW', 'en', 'zh-TW']
+            assert page.evaluate('window.turnstileResponseFields') == [False, False, False]
+            assert page.locator('[name=cf-turnstile-response]').count() == 0
             assert page.locator("#author").input_value() == ""
             context.close()
             # The actual preview server must not load Turnstile on localhost.
